@@ -8,6 +8,7 @@
 #include <errno.h>
 
 #include "headers/mensajes.h"
+#include "headers/worker.h"
 static unsigned _queue_id = 0;
 
 //mandar un mensaje, devuelve -1 si falla
