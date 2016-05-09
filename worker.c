@@ -20,48 +20,12 @@
 
 int nada(){return 3;}
 
-int getFiles(int id, mqd_t *workers, char *nombres)
+int mqd_t_comp(void* a, void* b)
 {
-    mqd_t self = workers[id];
-    char dir[20];
-    nombres[0] = '\0';
-    sprintf(dir, "data/worker%d", id);
-    DIR* d = opendir(dir);
-    
-    struct dirent *de;
-    for(de = NULL; (de = readdir(d)) != NULL; )
-    {
-        if(!(strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0))
-        {
-            strcat(nombres, de->d_name);
-            strcat(nombres, " ");
-        }
-    }
-    
-    //creo el request
-    Request helpRequest;
-    helpRequest.con = LSD;
-    msgBroadcast(self, workers, &helpRequest);
-    
-    for(int i = 0; i < N_WORKERS - 1; i++)
-    {
-        Msg helpReceive;
-        if(msgReceive(self, &helpReceive) <= 0)
-            fprintf(stderr, "flashié worker receive\n");
-        if(helpReceive.tipo == T_DEVUELVO_AYUDA)
-        {
-            strcat(nombres, (char*)(helpReceive.datos));
-            msgDestroy(&helpReceive);
-        }
-        else
-        {
-            if(msgSend(self, helpReceive) < 0)
-                fprintf(stderr, "flashié devolviendome un mensaje (en LSD)\n");
-        }
-    }
-    return 0;
+    mqd_t x = ((Sesion*)a)->casilla;
+    mqd_t y = ((Sesion*)a)->casilla;
+    return y - x;
 }
-
 void* worker(void* params_v)
 {
     // lo que hace worker/0
@@ -69,12 +33,9 @@ void* worker(void* params_v)
     mqd_t self;
     Msg msg;
     int id;
-    mqd_t *workers;
     ParametrosWorker params = *(ParametrosWorker*) params_v;
     id = params.id;
     self = params.casilla;
-    workers = params.casillasWorkers;
-    
     system("mkdir data -p");
     
     char cmd[30];

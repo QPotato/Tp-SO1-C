@@ -1,5 +1,5 @@
+#include <dirent.h>
 #include "headers/worker.h"
-
 /*
     funciones necesarias
 */
@@ -99,6 +99,7 @@ void handleCON(ParametrosWorker params, WorkerData *data, Msg *msg)
     }
     
     //epilogo
+    data->sesiones = sesiones;
     data->maxIDlocal = maxIDlocal;
     return;
 }
@@ -145,6 +146,7 @@ void handleLSD(ParametrosWorker params, WorkerData *data, Msg *msg)
     }    
     
     //epilogo
+    data->sesiones = sesiones;
     data->maxIDlocal = maxIDlocal;
 }
 
