@@ -22,6 +22,7 @@
     1)el que envia, hace malloc para datos.
     2)el que recibe, cuando termina de usar el mensaje hace un msgDestroy
 */
+typedef struct _Request Request;
 
 typedef struct {
     int tipo;
