@@ -6,9 +6,9 @@
 
 #include "headers/mensajes.h"
 #include "headers/procesos.h"
-#include "headers/worker.h"
 #include "headers/estructuras.h"
 #include "headers/SList.h"
+#include "headers/worker.h"
 /*
     Como sabes si el primer mensaje son las casillas de los otros o ya es un mensaje de trabajo?
     Necesitamos guardar metadatos en los mensajes como los pattern matching de Erlang.
@@ -18,16 +18,13 @@
     lleguen todas las casillas.
 */
 
-typedef struct {
-    mqd_t casilla;
-    SList* abiertos;
-} Sesion;
-
 int nada(){return 3;}
 
 int mqd_t_comp(void* a, void* b)
 {
-    return *((mqd_t*)b) - *((mqd_t*)a);
+    mqd_t x = ((Sesion*)a)->casilla;
+    mqd_t y = ((Sesion*)a)->casilla;
+    return y - x;
 }
 
 int getFiles(int id, mqd_t *workers, char *nombres)
