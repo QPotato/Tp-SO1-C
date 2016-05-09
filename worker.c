@@ -20,13 +20,6 @@
 
 int nada(){return 3;}
 
-int mqd_t_comp(void* a, void* b)
-{
-    mqd_t x = ((Sesion*)a)->casilla;
-    mqd_t y = ((Sesion*)a)->casilla;
-    return y - x;
-}
-
 int getFiles(int id, mqd_t *workers, char *nombres)
 {
     mqd_t self = workers[id];

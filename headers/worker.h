@@ -23,4 +23,12 @@ typedef struct
     SList* sesiones;
     int maxIDlocal;
 } WorkerData;
+
+int mqd_t_comp(void* a, void* b)
+{
+    mqd_t x = ((Sesion*)a)->casilla;
+    mqd_t y = ((Sesion*)a)->casilla;
+    return y - x;
+}
+
 #endif // __WORKER_H__
