@@ -3,12 +3,12 @@
 #define __WORKER_H__
 
 #define N_WORKERS 6
-#define MAX_NOMBRE 128
 #define MAX_ARCHIVOS 1024
 
 #include "estructuras.h"
 #include "SList.h"
 #include "mensajes.h"
+#include "procesos.h"
 
 
 typedef struct
@@ -24,12 +24,7 @@ typedef struct
     int maxIDlocal;
 } WorkerData;
 
-int mqd_t_comp(void* a, void* b)
-{
-    mqd_t x = ((Sesion*)a)->casilla;
-    mqd_t y = ((Sesion*)a)->casilla;
-    return y - x;
-}
+int mqd_t_comp(void* a, void* b);
 
 void handleCON(ParametrosWorker params, WorkerData *data, Msg *msg);
 

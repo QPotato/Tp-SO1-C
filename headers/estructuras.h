@@ -2,7 +2,6 @@
 #ifndef __ESTRUCTURAS_H__
 #define __ESTRUCTURAS_H__
 #include <stdlib.h>
-#include "worker.h"
 typedef int Comand;
 
 #define ERR -1
@@ -17,6 +16,7 @@ typedef int Comand;
 #define BYE 8
 
 #define BUFF_SIZE 10000 //esto va en contra de eso de los tamaños arbitrarios de mensajes
+#define MAX_NOMBRE 128
 
 
 typedef struct _Request {

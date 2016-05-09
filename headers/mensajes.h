@@ -9,7 +9,6 @@
 #include <string.h>
 #include <errno.h>
 
-#include "worker.h"
 #include "estructuras.h"
 
 #define T_CASILLAS 1
