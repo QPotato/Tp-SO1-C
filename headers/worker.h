@@ -31,4 +31,8 @@ int mqd_t_comp(void* a, void* b)
     return y - x;
 }
 
+void handleCON(ParametrosWorker params, WorkerData *data, Msg *msg);
+
+void handleLSD(ParametrosWorker params, WorkerData *data, Msg *msg);
+
 #endif // __WORKER_H__

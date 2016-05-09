@@ -74,7 +74,6 @@ void* worker(void* params_v)
     id = params.id;
     self = params.casilla;
     workers = params.casillasWorkers;
-    //recibirCasillas(casillasWorkers, self);
     
     system("mkdir data -p");
     
@@ -84,8 +83,11 @@ void* worker(void* params_v)
     system(cmd);
     
     int maxIDlocal = 0;
-    
     SList* sesiones = NULL;
+    
+    WorkerData datos;
+    datos.maxIDlocal = maxIDlocal;
+    datos.sesiones = sesiones;
     
     while(1)
     {
@@ -140,123 +142,19 @@ void* worker(void* params_v)
             }
         }
         else if(msg.tipo == T_REQUEST)
-        {
-            /*mqd_t cumpa = msg.remitente;
-            msg.remitente = self;
-            if(msgSend(cumpa, msg) < 0)
-                fprintf(stderr, "flashié ECHO\n");*/
-            
-            mqd_t cumpa = msg.remitente;
+        {               
             Request rqst = *(Request*)(msg.datos);
-            msgDestroy(&msg);
-            
-            
             switch(rqst.con)
             {
                 case CON:
-                    nada();
-                    if(slist_contains(sesiones, (void*)&cumpa, mqd_t_comp))
-                    {
-                        char res[128];
-                        sprintf(res, "Error: ya conectado.\n");
-                        Msg respuesta = msgCreate(self, T_REQUEST, res, strlen(res) + 1);
-                        if(msgSend(cumpa, respuesta) < 0)
-                            fprintf(stderr, "flashié send respuesta cumpa CON\n");
-                    }
-                    else
-                    {
-                        int userID = maxIDlocal * N_WORKERS + id;
-                        maxIDlocal++;
-                        Sesion* sn = malloc(sizeof(Sesion));
-                        sn->casilla = cumpa;
-                        sn->abiertos = NULL;
-                        sesiones = slist_append(sesiones, (void*) sn);
-                        
-                        
-                        char res[128];
-                        sprintf(res, "OK ID %d\n", userID);
-                        Msg respuesta = msgCreate(self, T_REQUEST, res, strlen(res) + 1);
-                        if(msgSend(cumpa, respuesta) < 0)
-                            fprintf(stderr, "flashié send respuesta cumpa CON\n");
-                    }
+                handleCON(params, &datos, &msg);
                 break;
                 
                 case LSD:
-                    if(slist_contains(sesiones, (void*)&cumpa, mqd_t_comp))
-                    {
-                        nada();
-                        char nombres[MAX_NOMBRE * MAX_ARCHIVOS * N_WORKERS];
-                        
-                        getFiles(id, workers, nombres);
-                        
-                        strcat(nombres, "\n");
-                        Msg respuesta = msgCreate(self, T_REQUEST, nombres, strlen(nombres) + 1);
-                        if(msgSend(cumpa, respuesta) < 0)
-                            fprintf(stderr, "flashié send respuesta cumpa LSD\n");
-                    }
-                    else
-                    {
-                        char res[128];
-                        sprintf(res, "Error: no conectado.\n");
-                        Msg respuesta = msgCreate(self, T_REQUEST, res, strlen(res) + 1);
-                        if(msgSend(cumpa, respuesta) < 0)
-                            fprintf(stderr, "flashié send respuesta cumpa LSD\n");
-                    }
-                break;
-                
-                case DEL:
-                    if(slist_contains(sesiones, (void*)&cumpa, mqd_t_comp))
-                    {
-                        char nombres[MAX_NOMBRE * MAX_ARCHIVOS * N_WORKERS];
-                        getFiles(id, workers, nombres);
-                    }
-                    else
-                    {
-                        char res[128];
-                        sprintf(res, "Error: no conectado.\n");
-                        Msg respuesta = msgCreate(self, T_REQUEST, res, strlen(res) + 1);
-                        if(msgSend(cumpa, respuesta) < 0)
-                            fprintf(stderr, "flashié send request DEL\n");
-                    }
+                handleLSD(params, &datos, &msg);
                 break;
                 
                 case CRE:
-                    if(slist_contains(sesiones, (void*)&cumpa, mqd_t_comp))
-                    {
-                        char file[MAX_NOMBRE + 15];
-                        char nombres[(MAX_NOMBRE + 15) * MAX_ARCHIVOS * N_WORKERS];
-                        getFiles(id, workers, nombres);
-                        sprintf(file, "data/worker%d/%s", id, rqst.nombre_archivo);
-                        
-                        printf("rqst.nombre_archivo -%s-\n", rqst.nombre_archivo);
-                        
-                        if(strstr(nombres, rqst.nombre_archivo) == NULL)
-                        {
-                            FILE* dummy = fopen(file, "a");
-                            fclose(dummy);
-                            char res[128];
-                            sprintf(res, "OK\n");
-                            Msg respuesta = msgCreate(self, T_REQUEST, res, strlen(res) + 1);
-                            if(msgSend(cumpa, respuesta) < 0)
-                                fprintf(stderr, "flashié send respuesta cumpa CRE\n");
-                        }
-                        else
-                        {
-                            char res[128];
-                            sprintf(res, "ERROR el archivo ya existe\n");
-                            Msg respuesta = msgCreate(self, T_REQUEST, res, strlen(res) + 1);
-                            if(msgSend(cumpa, respuesta) < 0)
-                                fprintf(stderr, "flashié send respuesta cumpa CRE\n");
-                        }
-                    }
-                    else
-                    {
-                        char res[128];
-                        sprintf(res, "Error: no conectado.\n");
-                        Msg respuesta = msgCreate(self, T_REQUEST, res, strlen(res) + 1);
-                        if(msgSend(cumpa, respuesta) < 0)
-                            fprintf(stderr, "flashié send request CRE\n");
-                    }
                 break;
                 
                 case OPN:
