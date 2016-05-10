@@ -14,7 +14,7 @@
 typedef struct
 {
     int fd;
-    char* nombre;
+    char nombre[MAX_NOMBRE];
     mqd_t host;
 } Abierto;
 
