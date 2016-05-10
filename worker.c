@@ -49,6 +49,7 @@ void* worker(void* params_v)
     WorkerData datos;
     datos.maxIDlocal = maxIDlocal;
     datos.sesiones = sesiones;
+    datos.nAbiertos = 0;
     
     while(1)
     {

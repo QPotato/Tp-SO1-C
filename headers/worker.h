@@ -11,18 +11,26 @@
 #include "mensajes.h"
 #include "procesos.h"
 
+typedef struct
+{
+    int fd;
+    char* nombre;
+    mqd_t host;
+} Abierto;
 
 typedef struct
 {
     mqd_t casilla;
     int fd[MAX_ABIERTOS];
+    int nAbiertos;
 } Sesion;
 
 typedef struct
 {
     SList* sesiones;
     int maxIDlocal;
-    char *abiertos[MAX_ABIERTOS]
+    Abierto abiertos[MAX_ABIERTOS];
+    int nAbiertos;
 } WorkerData;
 
 //Funciones Auxiliares

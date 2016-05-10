@@ -94,7 +94,7 @@ void handleCON(ParametrosWorker params, WorkerData *data, Msg *msg)
         maxIDlocal++;
         Sesion* sn = malloc(sizeof(Sesion));
         sn->casilla = cumpa;
-        sn->abiertos = NULL;
+        sn->nAbiertos = 0;
         sesiones = slist_append(sesiones, (void*) sn);
         
         char res[128];
