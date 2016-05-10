@@ -57,33 +57,11 @@ void* worker(void* params_v)
         
         if(msg.tipo == T_AYUDA)
         {
-            mqd_t cumpa = msg.remitente;
             Request rqst = *(Request*)(msg.datos);
-            msgDestroy(&msg);
-            
             switch(rqst.con)
             {
                 case LSD:
-                    nada();
-                    char dir[20];
-                    char nombres[MAX_NOMBRE * MAX_ARCHIVOS];
-                    nombres[0] = '\0';
-                    sprintf(dir, "data/worker%d", id);
-                    DIR* d = opendir(dir);
-                    
-                    struct dirent *de;
-                    for(de = NULL; (de = readdir(d)) != NULL; )
-                    {
-                        if(!(strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0))
-                        {
-                            strcat(nombres, de->d_name);
-                            strcat(nombres, " ");
-                        }
-                    }
-                    
-                    msg = msgCreate(self, T_DEVUELVO_AYUDA, (void*)nombres, strlen(nombres) + 1);
-                    if(msgSend(cumpa, msg) < 0)
-                        fprintf(stderr, "flashié send ayuda LSD\n");
+                    helpLSD(params, &datos, &msg);
                 break;
                 
                 case DEL:
