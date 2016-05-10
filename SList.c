@@ -142,3 +142,17 @@ SList*  slist_sort(SList* lista, CompFunc comp){
         }
     return lista;
 }
+
+void* slist_nth(Slist* lista, int n)
+{
+    while(n > 0)
+    {
+        if(lista->next == NULL)
+        {
+            printf("Acceso a SList fuera de rango");
+            return NULL;
+        }
+        lista = lista->next
+    }
+    return lista->data;
+}
