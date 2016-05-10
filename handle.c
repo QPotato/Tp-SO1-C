@@ -4,10 +4,9 @@
     funciones necesarias
 */
 
-//devuelve en char *nombres un string con todos los archivos separados por ' '
-void getFiles(int id, mqd_t *workers, char *nombres)
+//devuelve en char *nombres un string con los archivos locales separados por ' '
+void getLocalFiles(int id, mqd_t *workers, char *nombres)
 {
-    mqd_t self = workers[id];
     char dir[20];
     nombres[0] = '\0';
     sprintf(dir, "data/worker%d", id);
@@ -22,6 +21,14 @@ void getFiles(int id, mqd_t *workers, char *nombres)
             strcat(nombres, " ");
         }
     }
+    return;
+}
+
+//devuelve en char *nombres un string con todos los archivos separados por ' '
+void getFiles(int id, mqd_t *workers, char *nombres)
+{
+    mqd_t self = workers[id];
+    getLocalFiles(id, workers, nombres);
     
     //creo el request
     Request helpRequest;
@@ -47,9 +54,9 @@ void getFiles(int id, mqd_t *workers, char *nombres)
     return;
 }
 
-int isConnected(mqd_t cumpa, SList* sesiones)
+int buscarSesion(mqd_t cumpa, SList* sesiones)
 {
-    return slist_contains(sesiones, (void*)&cumpa, mqd_t_comp);
+    return slist_index(sesiones, (void*)&cumpa, mqd_t_comp);
 }
 
 /*
@@ -67,9 +74,9 @@ void handleCON(ParametrosWorker params, WorkerData *data, Msg *msg)
     
     SList* sesiones = data->sesiones;
     int maxIDlocal = data->maxIDlocal;
-    
+    printf("soy %u\n", self);
     //handle...
-    if(isConnected(cumpa, sesiones))
+    if(buscarSesion(cumpa, sesiones) >= 0)
     {
         //ya está conectado, devuelvo error.
         char res[128];
@@ -121,7 +128,7 @@ void handleLSD(ParametrosWorker params, WorkerData *data, Msg *msg)
     int maxIDlocal = data->maxIDlocal;
 
     //handle...
-    if(isConnected(cumpa, sesiones))
+    if(buscarSesion(cumpa, sesiones) >= 0)
     {
         //está conectado, devuelvo los archivos.
         char nombres[MAX_NOMBRE * MAX_ARCHIVOS * N_WORKERS];
@@ -146,6 +153,10 @@ void handleLSD(ParametrosWorker params, WorkerData *data, Msg *msg)
     data->maxIDlocal = maxIDlocal;
 }
 
+
+/*
+    handle CRE
+*/
 void handleCRE(ParametrosWorker params, WorkerData *data, Msg *msg)
 {
     //data necesaria del mensaje
@@ -163,14 +174,12 @@ void handleCRE(ParametrosWorker params, WorkerData *data, Msg *msg)
     int maxIDlocal = data->maxIDlocal;
 
     //handle...
-    if(slist_contains(sesiones, (void*)&cumpa, mqd_t_comp))
+    if(buscarSesion(cumpa, sesiones) >= 0)
     {
         char file[MAX_NOMBRE + 15];
         char nombres[(MAX_NOMBRE + 15) * MAX_ARCHIVOS * N_WORKERS];
         getFiles(id, workers, nombres);
         sprintf(file, "data/worker%d/%s", id, rqst.nombre_archivo);
-        
-        printf("rqst.nombre_archivo -%s-\n", rqst.nombre_archivo);
         
         if(strstr(nombres, rqst.nombre_archivo) == NULL)
         {
@@ -205,7 +214,10 @@ void handleCRE(ParametrosWorker params, WorkerData *data, Msg *msg)
     data->maxIDlocal = maxIDlocal;
 }
 
-//a medio hacer
+
+/*
+    handle DEL
+*/
 void handleDEL(ParametrosWorker params, WorkerData *data, Msg *msg)
 {
     //data necesaria del mensaje
@@ -223,7 +235,7 @@ void handleDEL(ParametrosWorker params, WorkerData *data, Msg *msg)
     int maxIDlocal = data->maxIDlocal;
 
     //handle...
-    if(slist_contains(sesiones, (void*)&cumpa, mqd_t_comp))
+    if(buscarSesion(cumpa, sesiones) >= 0)
     {
         char nombres[MAX_NOMBRE * MAX_ARCHIVOS * N_WORKERS];
         getFiles(id, workers, nombres);
@@ -241,3 +253,66 @@ void handleDEL(ParametrosWorker params, WorkerData *data, Msg *msg)
     data->sesiones = sesiones;
     data->maxIDlocal = maxIDlocal;
 }
+
+/*
+    handle OPN
+*/
+void handleOPN(ParametrosWorker params, WorkerData *data, Msg *msg)
+{
+    //data necesaria del mensaje
+    mqd_t cumpa = msg->remitente;
+    Request rqst = *(Request*)(msg->datos);
+    msgDestroy(msg);
+    
+    //data necesaria del worker
+    int id = params.id;
+    mqd_t self = params.casilla;
+    mqd_t *workers;
+    workers = params.casillasWorkers;
+    SList* sesiones = data->sesiones;
+    int maxIDlocal = data->maxIDlocal;
+
+    //handle...
+    int sesionID;
+    if((sesionID = buscarSesion(cumpa, sesiones)) >= 0)
+    {
+        char nombres[MAX_NOMBRE * MAX_ARCHIVOS * N_WORKERS];
+        getFiles(id, workers, nombres);
+        if(strstr(nombres, rqst.nombre_archivo) != NULL)
+        {
+            char locales[MAX_NOMBRE * MAX_ARCHIVOS];
+            getLocalFiles(id, workers, locales);
+            if(strstr(locales, rqst.nombre_archivo) != NULL)
+            {
+                //el archivo lo tiene el worker, qué suerte...
+                printf("gg");
+            }
+            else
+            {
+                //el archivo lo tiene otro worker, la peor...
+                printf("gg");
+            }
+        }
+        else
+        {
+            char res[128];
+            sprintf(res, "Error: archivo inexistente.\n");
+            Msg respuesta = msgCreate(self, T_REQUEST, res, strlen(res) + 1);
+            if(msgSend(cumpa, respuesta) < 0)
+                fprintf(stderr, "flashié send request DEL\n");
+        }
+    }
+    else
+    {
+        char res[128];
+        sprintf(res, "Error: no conectado.\n");
+        Msg respuesta = msgCreate(self, T_REQUEST, res, strlen(res) + 1);
+        if(msgSend(cumpa, respuesta) < 0)
+            fprintf(stderr, "flashié send request DEL\n");
+    }
+    
+    //epilogo
+    data->sesiones = sesiones;
+    data->maxIDlocal = maxIDlocal;
+}
+
