@@ -208,3 +208,40 @@ void handleCRE(ParametrosWorker params, WorkerData *data, Msg *msg)
     data->sesiones = sesiones;
     data->maxIDlocal = maxIDlocal;
 }
+
+//a medio hacer
+void handleDEL(ParametrosWorker params, WorkerData *data, Msg *msg)
+{
+    //data necesaria del mensaje
+    mqd_t cumpa = msg->remitente;
+    Request rqst = *(Request*)(msg->datos);
+    msgDestroy(msg);
+    
+    //data necesaria del worker
+    int id = params.id;
+    mqd_t self = params.casilla;
+    mqd_t *workers;
+    workers = params.casillasWorkers;
+    
+    SList* sesiones = data->sesiones;
+    int maxIDlocal = data->maxIDlocal;
+
+    //handle...
+    if(slist_contains(sesiones, (void*)&cumpa, mqd_t_comp))
+    {
+        char nombres[MAX_NOMBRE * MAX_ARCHIVOS * N_WORKERS];
+        getFiles(id, workers, nombres);
+    }
+    else
+    {
+        char res[128];
+        sprintf(res, "Error: no conectado.\n");
+        Msg respuesta = msgCreate(self, T_REQUEST, res, strlen(res) + 1);
+        if(msgSend(cumpa, respuesta) < 0)
+            fprintf(stderr, "flashié send request DEL\n");
+    }
+    
+    //epilogo
+    data->sesiones = sesiones;
+    data->maxIDlocal = maxIDlocal;
+}

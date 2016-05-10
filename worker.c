@@ -119,6 +119,10 @@ void* worker(void* params_v)
                     handleCRE(params, &datos, &msg);
                 break;
                 
+                case DEL:
+                    handleDEL(params, &datos, &msg);
+                break;
+                
                 case OPN:
                 break;
                 
