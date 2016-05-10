@@ -278,30 +278,41 @@ void handleOPN(ParametrosWorker params, WorkerData *data, Msg *msg)
     int sesionID;
     if((sesionID = buscarSesion(cumpa, sesiones)) >= 0)
     {
-        char nombres[MAX_NOMBRE * MAX_ARCHIVOS * N_WORKERS];
-        getFiles(id, workers, nombres);
-        if(strstr(nombres, rqst.nombre_archivo) != NULL)
+        char locales[MAX_NOMBRE * MAX_ARCHIVOS];
+        getLocalFiles(id, workers, locales);
+        if(strstr(locales, rqst.nombre_archivo) != NULL)            //TODO: fijarse que no esté abierto.
         {
-            char locales[MAX_NOMBRE * MAX_ARCHIVOS];
-            getLocalFiles(id, workers, locales);
-            if(strstr(locales, rqst.nombre_archivo) != NULL)
-            {
-                //el archivo lo tiene el worker, qué suerte...
-                printf("gg");
-            }
-            else
-            {
-                //el archivo lo tiene otro worker, la peor...
-                printf("gg");
-            }
+            //tengo el archivo!
+            char file[MAX_NOMBRE + 15];
+            sprintf(file, "data/worker%d/%s", id, rqst.nombre_archivo);
+            int FD = open(file, O_RDWR);
+            
+            //creo el abierto
+            abierto new;
+            new.fd = FD;
+            strcpy(new.nombre, rqst.nombre_archivo);
+            new.host = self;
+            
+            //lo agrego a mi lista
+            data->abiertos[data->nAbiertos] = new;
+            data->nAbiertos++;
+            
+            //modifico la sesion
+            Sesion *ses = (Sesion *)SList_nth(sesiones, sesionID);
+            ses->fd[ses->nAbiertos] = FD;
+            ses->nAbiertos++;
+            
+            //envio la respuesta
+            char res[128];
+            sprintf(res, "OK FD %d\n", FD);
+            Msg respuesta = msgCreate(self, T_REQUEST, res, strlen(res) + 1);
+            if(msgSend(cumpa, respuesta) < 0)
+                fprintf(stderr, "flashié send respuesta cumpa OPN\n");
         }
         else
         {
-            char res[128];
-            sprintf(res, "Error: archivo inexistente.\n");
-            Msg respuesta = msgCreate(self, T_REQUEST, res, strlen(res) + 1);
-            if(msgSend(cumpa, respuesta) < 0)
-                fprintf(stderr, "flashié send request DEL\n");
+            //no lo tengo, quién lo tiene?
+            printf("not implemented\n");
         }
     }
     else
