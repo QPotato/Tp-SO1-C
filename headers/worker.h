@@ -4,6 +4,7 @@
 
 #define N_WORKERS 6
 #define MAX_ARCHIVOS 1024
+#define MAX_ABIERTOS MAX_ARCHIVOS
 
 #include "estructuras.h"
 #include "SList.h"
@@ -13,15 +14,15 @@
 
 typedef struct
 {
-    int id;
     mqd_t casilla;
-    SList* abiertos;
+    int fd[MAX_ABIERTOS];
 } Sesion;
 
 typedef struct
 {
     SList* sesiones;
     int maxIDlocal;
+    char *abiertos[MAX_ABIERTOS]
 } WorkerData;
 
 //Funciones Auxiliares
