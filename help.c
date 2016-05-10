@@ -5,15 +5,11 @@ void helpLSD(ParametrosWorker params, WorkerData *data, Msg *msg)
 {
     //data necesaria del mensaje
     mqd_t cumpa = msg->remitente;
-    Request rqst = *(Request*)(msg->datos);
     msgDestroy(msg);
-
-    fflush(stdout);    
+    
     //data necesaria del worker
     int id = params.id;
     mqd_t self = params.casilla;
-    mqd_t *workers;
-    workers = params.casillasWorkers;
     
     SList* sesiones = data->sesiones;
     int maxIDlocal = data->maxIDlocal;
