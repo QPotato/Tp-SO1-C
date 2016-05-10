@@ -74,9 +74,11 @@ void handleCON(ParametrosWorker params, WorkerData *data, Msg *msg)
     
     SList* sesiones = data->sesiones;
     int maxIDlocal = data->maxIDlocal;
-    printf("soy %u\n", self);
+    printf("soy %u", self);
     //handle...
-    if(buscarSesion(cumpa, sesiones) >= 0)
+    int debug = buscarSesion(cumpa, sesiones);
+    printf("index %d\n", debug);
+    if(debug >= 0)
     {
         //ya está conectado, devuelvo error.
         char res[128];

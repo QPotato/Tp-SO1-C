@@ -109,7 +109,7 @@ int     slist_contains(SList* lista, void* n, CompFunc comp){
             return 1;
     return 0;
 }
-unsigned int slist_index(SList* lista, void* n, CompFunc comp){
+int slist_index(SList* lista, void* n, CompFunc comp){
     SList* l;
     int i=0;
     for(l=lista;l!=NULL;l=l->next,i++)

@@ -23,7 +23,7 @@ int nada(){return 3;}
 int mqd_t_comp(void* a, void* b)
 {
     mqd_t x = ((Sesion*)a)->casilla;
-    mqd_t y = ((Sesion*)a)->casilla;
+    mqd_t y = *(mqd_t*)b;
     return y - x;
 }
 void* worker(void* params_v)
