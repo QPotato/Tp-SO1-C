@@ -30,4 +30,5 @@ void handleCON(ParametrosWorker params, WorkerData *data, Msg *msg);
 
 void handleLSD(ParametrosWorker params, WorkerData *data, Msg *msg);
 
+void handleCRE(ParametrosWorker params, WorkerData *data, Msg *msg);
 #endif // __WORKER_H__

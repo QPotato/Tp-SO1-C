@@ -108,14 +108,15 @@ void* worker(void* params_v)
             switch(rqst.con)
             {
                 case CON:
-                handleCON(params, &datos, &msg);
+                    handleCON(params, &datos, &msg);
                 break;
                 
                 case LSD:
-                handleLSD(params, &datos, &msg);
+                    handleLSD(params, &datos, &msg);
                 break;
                 
                 case CRE:
+                    handleCRE(params, &datos, &msg);
                 break;
                 
                 case OPN:
