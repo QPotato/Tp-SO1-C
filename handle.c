@@ -247,8 +247,12 @@ void handleDEL(ParametrosWorker params, WorkerData *data, Msg *msg)
     //handle...
     if(buscarSesion(cumpa, sesiones) >= 0)
     {
-        char nombres[MAX_NOMBRE * MAX_ARCHIVOS * N_WORKERS];
-        getFiles(id, workers, nombres);
+        printf("No implementado DEL\n");
+        char res[128];
+        sprintf(res, "Error: no implementado.\n");
+        Msg respuesta = msgCreate(self, T_REQUEST, res, strlen(res) + 1);
+        if(msgSend(cumpa, respuesta) < 0)
+            fprintf(stderr, "flashié send request DEL\n");
     }
     else
     {
@@ -358,8 +362,12 @@ void handleWRT(ParametrosWorker params, WorkerData *data, Msg *msg)
     int maxIDlocal = data->maxIDlocal;
 
     //handle...
-    printf("No implementado");
-        
+    printf("No implementado\n");
+    char res[128];
+    sprintf(res, "Error: no implementado.\n");
+    Msg respuesta = msgCreate(self, T_REQUEST, res, strlen(res) + 1);
+    if(msgSend(cumpa, respuesta) < 0)
+        fprintf(stderr, "flashié send request\n");
     //epilogo
     data->sesiones = sesiones;
     data->maxIDlocal = maxIDlocal;
@@ -386,7 +394,12 @@ void handleCLO(ParametrosWorker params, WorkerData *data, Msg *msg)
     int maxIDlocal = data->maxIDlocal;
 
     //handle...
-    printf("No implementado");
+    printf("No implementado\n");
+    char res[128];
+    sprintf(res, "Error: no implementado.\n");
+    Msg respuesta = msgCreate(self, T_REQUEST, res, strlen(res) + 1);
+    if(msgSend(cumpa, respuesta) < 0)
+        fprintf(stderr, "flashié send request\n");
         
     //epilogo
     data->sesiones = sesiones;
@@ -414,7 +427,12 @@ void handleBYE(ParametrosWorker params, WorkerData *data, Msg *msg)
     int maxIDlocal = data->maxIDlocal;
 
     //handle...
-    printf("No implementado");
+    printf("No implementado\n");
+    char res[128];
+    sprintf(res, "Error: no implementado.\n");
+    Msg respuesta = msgCreate(self, T_REQUEST, res, strlen(res) + 1);
+    if(msgSend(cumpa, respuesta) < 0)
+        fprintf(stderr, "flashié send request\n");
         
     //epilogo
     data->sesiones = sesiones;
