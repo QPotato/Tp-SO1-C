@@ -10,22 +10,10 @@
 #include "headers/SList.h"
 #include "headers/worker.h"
 /*
-    Como sabes si el primer mensaje son las casillas de los otros o ya es un mensaje de trabajo?
-    Necesitamos guardar metadatos en los mensajes como los pattern matching de Erlang.
-
-    Hacemos un poco mas larga msgDestroy para que tambien libere el void*
     Ponele que el mensaje que no es una casilla lo guardamos en una especie de buffer de mensajes para autoenviarnos cuando
     lleguen todas las casillas.
 */
 
-int nada(){return 3;}
-
-int mqd_t_comp(void* a, void* b)
-{
-    mqd_t x = ((Sesion*)a)->casilla;
-    mqd_t y = *(mqd_t*)b;
-    return y - x;
-}
 void* worker(void* params_v)
 {
     // lo que hace worker/0
@@ -103,18 +91,23 @@ void* worker(void* params_v)
                 break;
                 
                 case OPN:
+                    handleOPN(params, &datos, &msg);
                 break;
                 
                 case WRT:
+                    handleWRT(params, &datos, &msg);
                 break;
                 
                 case REA:
+                    handleREA(params, &datos, &msg);
                 break;
                 
                 case CLO:
+                    handleCLO(params, &datos, &msg);
                 break;
                 
                 case BYE:
+                    handleBYE(params, &datos, &msg);
                 break;
             }
         }

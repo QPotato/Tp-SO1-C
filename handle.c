@@ -4,6 +4,14 @@
     funciones necesarias
 */
 
+// Funcion de comparacion. Devuelve 0 si y solo si la sesion a tiene como casilla b.
+int mqd_t_comp(void* a, void* b)
+{
+    mqd_t x = ((Sesion*)a)->casilla;
+    mqd_t y = *(mqd_t*)b;
+    return y - x;
+}
+
 //devuelve en char *nombres un string con los archivos locales separados por ' '
 void getLocalFiles(int id, mqd_t *workers, char *nombres)
 {
@@ -276,7 +284,15 @@ void handleOPN(ParametrosWorker params, WorkerData *data, Msg *msg)
 
     //handle...
     int sesionID;
-    if((sesionID = buscarSesion(cumpa, sesiones)) >= 0)
+    if((sesionID = buscarSesion(cumpa, sesiones)) < 0)
+    {
+        char res[128];
+        sprintf(res, "Error: no conectado.\n");
+        Msg respuesta = msgCreate(self, T_REQUEST, res, strlen(res) + 1);
+        if(msgSend(cumpa, respuesta) < 0)
+            fprintf(stderr, "flashié send request DEL\n");
+    }
+    else
     {
         char locales[MAX_NOMBRE * MAX_ARCHIVOS];
         getLocalFiles(id, workers, locales);
@@ -315,17 +331,92 @@ void handleOPN(ParametrosWorker params, WorkerData *data, Msg *msg)
             printf("not implemented\n");
         }
     }
-    else
-    {
-        char res[128];
-        sprintf(res, "Error: no conectado.\n");
-        Msg respuesta = msgCreate(self, T_REQUEST, res, strlen(res) + 1);
-        if(msgSend(cumpa, respuesta) < 0)
-            fprintf(stderr, "flashié send request DEL\n");
-    }
     
     //epilogo
     data->sesiones = sesiones;
     data->maxIDlocal = maxIDlocal;
 }
 
+/*
+    handle WRT
+    No implementado
+*/
+void handleWRT(ParametrosWorker params, WorkerData *data, Msg *msg)
+{
+    //data necesaria del mensaje
+    mqd_t cumpa = msg->remitente;
+    //Request rqst = *(Request*)(msg->datos);
+    msgDestroy(msg);
+    
+    //data necesaria del worker
+    int id = params.id;
+    mqd_t self = params.casilla;
+    mqd_t *workers;
+    workers = params.casillasWorkers;
+    
+    SList* sesiones = data->sesiones;
+    int maxIDlocal = data->maxIDlocal;
+
+    //handle...
+    printf("No implementado");
+        
+    //epilogo
+    data->sesiones = sesiones;
+    data->maxIDlocal = maxIDlocal;
+}
+
+/*
+    handle CLO
+    No implementado
+*/
+void handleCLO(ParametrosWorker params, WorkerData *data, Msg *msg)
+{
+    //data necesaria del mensaje
+    mqd_t cumpa = msg->remitente;
+    //Request rqst = *(Request*)(msg->datos);
+    msgDestroy(msg);
+    
+    //data necesaria del worker
+    int id = params.id;
+    mqd_t self = params.casilla;
+    mqd_t *workers;
+    workers = params.casillasWorkers;
+    
+    SList* sesiones = data->sesiones;
+    int maxIDlocal = data->maxIDlocal;
+
+    //handle...
+    printf("No implementado");
+        
+    //epilogo
+    data->sesiones = sesiones;
+    data->maxIDlocal = maxIDlocal;
+}
+
+/*
+    handle BYE
+    No implementado
+*/
+void handleBYE(ParametrosWorker params, WorkerData *data, Msg *msg)
+{
+    //data necesaria del mensaje
+    mqd_t cumpa = msg->remitente;
+    //Request rqst = *(Request*)(msg->datos);
+    msgDestroy(msg);
+    
+    //data necesaria del worker
+    int id = params.id;
+    mqd_t self = params.casilla;
+    mqd_t *workers;
+    workers = params.casillasWorkers;
+    
+    SList* sesiones = data->sesiones;
+    int maxIDlocal = data->maxIDlocal;
+
+    //handle...
+    printf("No implementado");
+        
+    //epilogo
+    data->sesiones = sesiones;
+    data->maxIDlocal = maxIDlocal;
+}

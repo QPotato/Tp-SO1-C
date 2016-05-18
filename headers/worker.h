@@ -49,6 +49,17 @@ void handleCRE(ParametrosWorker params, WorkerData *data, Msg *msg);
 
 void handleDEL(ParametrosWorker params, WorkerData *data, Msg *msg);
 
+void handleOPN(ParametrosWorker params, WorkerData *data, Msg *msg);
+
+void handleREA(ParametrosWorker params, WorkerData *data, Msg *msg);
+
+void handleWRT(ParametrosWorker params, WorkerData *data, Msg *msg);
+
+void handleCLO(ParametrosWorker params, WorkerData *data, Msg *msg);
+
+void handleBYE(ParametrosWorker params, WorkerData *data, Msg *msg);
+
+
 //Handles de pedidos de ayuda
 void helpLSD(ParametrosWorker params, WorkerData *data, Msg *msg);
 
