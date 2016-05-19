@@ -17,4 +17,3 @@ jueves 28:
     -el cliente guarda solo el FD
     -cada host guarda una lista de abiertos
     -si el archivo pedido lo tiene otro worker, yo lo guardo en mis abiertos pero me quedo la referencia a host.
-    
