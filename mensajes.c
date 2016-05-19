@@ -9,6 +9,11 @@
 
 #include "headers/mensajes.h"
 #include "headers/worker.h"
+/*
+Interfaz de mensajeria.
+La convencion es que el que recibe un mensaje debe destruirlo o reenviarlo a alguien, porque msgCreate hace malloc.
+*/
+
 static unsigned _queue_id = 0;
 
 //mandar un mensaje, devuelve -1 si falla
@@ -20,13 +25,18 @@ int msgSend(mqd_t queue, Msg mensaje)
         return -1;
     return 0;
 }
+
+//una funcion miembro masculino que rompe nuestras convenciones.
+//crea mensajes para mandar a todo el mundo, asi los destroy multiples no tosquean.
+//O sea era la idea, pero se deberia romper igual porque todos van a liberar helpRequest.
 int msgBroadcast(mqd_t remitente, mqd_t *receptores, Request* helpRequest)
 {
     for(int i = 0; i < N_WORKERS; i++)
     {
         if(receptores[i] != remitente)
         {
-            if(msgSend(receptores[i], msgCreate(remitente, T_AYUDA, (void*) helpRequest, sizeof(Request))) < 0){
+            if(msgSend(receptores[i], msgCreate(remitente, T_AYUDA, (void*) helpRequest, sizeof(Request))) < 0)
+            {
                 fprintf(stderr, "flashié pidiendo ayuda LSD\n");
                 return -1;
             }    
@@ -34,6 +44,21 @@ int msgBroadcast(mqd_t remitente, mqd_t *receptores, Request* helpRequest)
     }
     return 0;
 }
+
+int msgBroadcastPiola(mqd_t *receptores, Msg mensaje, size_t dataSize)
+{
+    for(int i = 0; i < N_WORKERS; i++)
+    {
+        if(receptores[i] != mensaje.remitente)
+        {
+            Msg mensajito = msgCreate(remitente, mensaje.tipo, mensaje.datos, dataSize);
+            msgSend(receptores[i], mensajito);
+        }
+    }
+    msgDestroy(mensaje);
+    return 0;
+}
+
 //recibir un mensaje, devuelve el size
 int msgReceive(mqd_t queue, Msg *mensaje)
 {

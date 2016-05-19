@@ -33,8 +33,11 @@ typedef struct {
 //mandar un mensaje, devuelve -1 si falla
 int msgSend(mqd_t queue, Msg mensaje);
 
-//mandar un mensaje a todos los workers
+//mandar un mensaje a todos los workers, version mala
 int msgBroadcast(mqd_t remitente, mqd_t *receptores, Request* helpRequest);
+
+//mandar un mensaje a todos los workers, version piola
+int msgBroadcastPiola(mqd_t *receptores, Msg mensaje, size_t dataSize)
 
 //recibir un mensaje, devuelve el size
 int msgReceive(mqd_t queue, Msg *mensaje);
