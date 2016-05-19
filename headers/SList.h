@@ -47,7 +47,7 @@ SList*  slist_insert(SList* lista, unsigned int pos, void* n);
 SList*  slist_remove(SList* lista, void* n, CompFunc comp);
 int     slist_contains(SList* lista, void* n, CompFunc comp);
 int slist_index(SList* lista, void* n, CompFunc comp);
-void* slist_nth(Slist* lista, int n);
+void* slist_nth(SList* lista, int n);
 SList*  slist_intersect(SList* lista1, SList* lista2, CompFunc comp);
 SList*  slist_sort(SList* lista, CompFunc comp);
 #endif /* __SLIST_H__ */

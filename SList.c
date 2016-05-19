@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include "headers/SList.h"
 
 SList* slist_append(SList* list, void* data)
@@ -143,7 +144,7 @@ SList*  slist_sort(SList* lista, CompFunc comp){
     return lista;
 }
 
-void* slist_nth(Slist* lista, int n)
+void* slist_nth(SList* lista, int n)
 {
     while(n > 0)
     {
@@ -152,7 +153,7 @@ void* slist_nth(Slist* lista, int n)
             printf("Acceso a SList fuera de rango");
             return NULL;
         }
-        lista = lista->next
+        lista = lista->next;
     }
     return lista->data;
 }
