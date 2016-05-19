@@ -51,11 +51,11 @@ int msgBroadcastPiola(mqd_t *receptores, Msg mensaje, size_t dataSize)
     {
         if(receptores[i] != mensaje.remitente)
         {
-            Msg mensajito = msgCreate(remitente, mensaje.tipo, mensaje.datos, dataSize);
+            Msg mensajito = msgCreate(mensaje.remitente, mensaje.tipo, mensaje.datos, dataSize);
             msgSend(receptores[i], mensajito);
         }
     }
-    msgDestroy(mensaje);
+    msgDestroy(&mensaje);
     return 0;
 }
 
