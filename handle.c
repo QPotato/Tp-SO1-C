@@ -62,9 +62,27 @@ void getFiles(int id, mqd_t *workers, char *nombres)
     return;
 }
 
+//Devuelve el indice de la sesion en la lista de sesiones o -1 si no esta.
 int buscarSesion(mqd_t cumpa, SList* sesiones)
 {
     return slist_index(sesiones, (void*)&cumpa, mqd_t_comp);
+}
+
+//Devuelve 1 si hay un abierto de nombre nombreAr en abiertos.
+int estaAbierto(const char* nombreAr, Abierto* abiertos, int nAbiertos)
+{
+    for(int i = 0; i < nAbiertos; i++)
+        if(strcmp(nombreAr, abiertos[i].nombre) == 0)
+            return 1;
+    return 0;
+}
+
+//"Macro" para enviarle al proc_socket la respuesta a la request del usuario.
+void enviarRespuesta(mqd_t remitente,mqd_t procSocket, char* resStr)
+{
+    Msg respuesta = msgCreate(remitente, T_REQUEST, resStr, strlen(resStr) + 1);
+    if(msgSend(procSocket, respuesta) < 0)
+        fprintf(stderr, "flashié enviarRespuesta\n");
 }
 
 /*
@@ -227,6 +245,7 @@ void handleCRE(ParametrosWorker params, WorkerData *data, Msg *msg)
 
 /*
     handle DEL
+    no implementado
 */
 void handleDEL(ParametrosWorker params, WorkerData *data, Msg *msg)
 {
@@ -236,10 +255,10 @@ void handleDEL(ParametrosWorker params, WorkerData *data, Msg *msg)
     msgDestroy(msg);
     
     //data necesaria del worker
-    int id = params.id;
+    //int id = params.id;
     mqd_t self = params.casilla;
-    mqd_t *workers;
-    workers = params.casillasWorkers;
+    //mqd_t *workers;
+    //workers = params.casillasWorkers;
     
     SList* sesiones = data->sesiones;
     int maxIDlocal = data->maxIDlocal;
@@ -270,6 +289,7 @@ void handleDEL(ParametrosWorker params, WorkerData *data, Msg *msg)
 
 /*
     handle OPN
+    a medio implementar
 */
 void handleOPN(ParametrosWorker params, WorkerData *data, Msg *msg)
 {
@@ -285,57 +305,93 @@ void handleOPN(ParametrosWorker params, WorkerData *data, Msg *msg)
     workers = params.casillasWorkers;
     SList* sesiones = data->sesiones;
     int maxIDlocal = data->maxIDlocal;
-
+    Abierto* abiertos = data->abiertos;
+    int nAbiertos = data->nAbiertos;
+    
     //handle...
     int sesionID;
     if((sesionID = buscarSesion(cumpa, sesiones)) < 0)
     {
-        char res[128];
-        sprintf(res, "Error: no conectado.\n");
-        Msg respuesta = msgCreate(self, T_REQUEST, res, strlen(res) + 1);
-        if(msgSend(cumpa, respuesta) < 0)
-            fprintf(stderr, "flashié send request DEL\n");
+        enviarRespuesta(self, cumpa, "Error: no conectado.\n");
     }
     else
     {
         char locales[MAX_NOMBRE * MAX_ARCHIVOS];
         getLocalFiles(id, workers, locales);
-        if(strstr(locales, rqst.nombre_archivo) != NULL)            //TODO: fijarse que no esté abierto.
+        if(strstr(locales, rqst.nombre_archivo) != NULL )            //TODO: fijarse que no esté abierto.
         {
             //tengo el archivo!
-            char file[MAX_NOMBRE + 15];
-            sprintf(file, "data/worker%d/%s", id, rqst.nombre_archivo);
-            int FD = open(file, O_RDWR);
-            
-            //creo el abierto
-            abierto new;
-            new.fd = FD;
-            strcpy(new.nombre, rqst.nombre_archivo);
-            new.host = self;
-            
-            //lo agrego a mi lista
-            data->abiertos[data->nAbiertos] = new;
-            data->nAbiertos++;
-            
-            //modifico la sesion
-            Sesion *ses = (Sesion *)SList_nth(sesiones, sesionID);
-            ses->fd[ses->nAbiertos] = FD;
-            ses->nAbiertos++;
-            
-            //envio la respuesta
-            char res[128];
-            sprintf(res, "OK FD %d\n", FD);
-            Msg respuesta = msgCreate(self, T_REQUEST, res, strlen(res) + 1);
-            if(msgSend(cumpa, respuesta) < 0)
-                fprintf(stderr, "flashié send respuesta cumpa OPN\n");
+            if(estaAbierto(rqst.nombre_archivo, abiertos, nAbiertos))
+            {
+                enviarRespuesta(self, cumpa, "Error: archivo ya abierto\n");
+            }
+            else
+            {
+                char file[MAX_NOMBRE + 15];
+                sprintf(file, "data/worker%d/%s", id, rqst.nombre_archivo);
+                int FD = open(file, O_RDWR);
+                
+                //creo el abierto
+                Abierto new;
+                new.fd = FD;
+                strcpy(new.nombre, rqst.nombre_archivo);
+                new.host = self;
+                
+                //lo agrego a mi lista
+                data->abiertos[data->nAbiertos] = new;
+                data->nAbiertos++;
+                
+                //modifico la sesion
+                Sesion *ses = (Sesion *)slist_nth(sesiones, sesionID);
+                ses->fd[ses->nAbiertos] = FD;
+                ses->nAbiertos++;
+                
+                //envio la respuesta
+                char res[128];
+                sprintf(res, "OK FD %d\n", FD);
+                enviarRespuesta(self, cumpa, res);
+            }
         }
         else
         {
             //no lo tengo, quién lo tiene?
-            printf("not implemented\n");
+            printf("not implemented, archivo existe pero lo tiene otro\n");
+            enviarRespuesta(self, cumpa, "not implemented, archivo existe pero lo tiene otro\n");
         }
     }
     
+    //epilogo
+    data->sesiones = sesiones;
+    data->maxIDlocal = maxIDlocal;
+}
+
+/*
+    handle REA
+    No implementado
+*/
+void handleREA(ParametrosWorker params, WorkerData *data, Msg *msg)
+{
+    //data necesaria del mensaje
+    mqd_t cumpa = msg->remitente;
+    //Request rqst = *(Request*)(msg->datos);
+    msgDestroy(msg);
+    
+    //data necesaria del worker
+    //int id = params.id;
+    mqd_t self = params.casilla;
+    //mqd_t *workers;
+    //workers = params.casillasWorkers;
+    
+    SList* sesiones = data->sesiones;
+    int maxIDlocal = data->maxIDlocal;
+
+    //handle...
+    printf("No implementado\n");
+    char res[128];
+    sprintf(res, "Error: no implementado.\n");
+    Msg respuesta = msgCreate(self, T_REQUEST, res, strlen(res) + 1);
+    if(msgSend(cumpa, respuesta) < 0)
+        fprintf(stderr, "flashié send request\n");
     //epilogo
     data->sesiones = sesiones;
     data->maxIDlocal = maxIDlocal;
@@ -353,10 +409,10 @@ void handleWRT(ParametrosWorker params, WorkerData *data, Msg *msg)
     msgDestroy(msg);
     
     //data necesaria del worker
-    int id = params.id;
+    //int id = params.id;
     mqd_t self = params.casilla;
-    mqd_t *workers;
-    workers = params.casillasWorkers;
+    //mqd_t *workers;
+    //workers = params.casillasWorkers;
     
     SList* sesiones = data->sesiones;
     int maxIDlocal = data->maxIDlocal;
@@ -385,10 +441,10 @@ void handleCLO(ParametrosWorker params, WorkerData *data, Msg *msg)
     msgDestroy(msg);
     
     //data necesaria del worker
-    int id = params.id;
+    //int id = params.id;
     mqd_t self = params.casilla;
-    mqd_t *workers;
-    workers = params.casillasWorkers;
+    //mqd_t *workers;
+    //workers = params.casillasWorkers;
     
     SList* sesiones = data->sesiones;
     int maxIDlocal = data->maxIDlocal;
@@ -418,10 +474,10 @@ void handleBYE(ParametrosWorker params, WorkerData *data, Msg *msg)
     msgDestroy(msg);
     
     //data necesaria del worker
-    int id = params.id;
+    //int id = params.id;
     mqd_t self = params.casilla;
-    mqd_t *workers;
-    workers = params.casillasWorkers;
+    //mqd_t *workers;
+    //workers = params.casillasWorkers;
     
     SList* sesiones = data->sesiones;
     int maxIDlocal = data->maxIDlocal;
