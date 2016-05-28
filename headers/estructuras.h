@@ -2,6 +2,8 @@
 #ifndef __ESTRUCTURAS_H__
 #define __ESTRUCTURAS_H__
 #include <stdlib.h>
+#include "mensajes.h"
+#include "SList.h"
 typedef int Comand;
 
 #define ERR -1
@@ -25,4 +27,26 @@ typedef struct _Request {
     char *buffer; // <--------------- Esto lo tiene que liberar el qeu resuelva el WRT!!!!
     char nombre_archivo[MAX_NOMBRE];
 } Request;
+
+typedef struct
+{
+    int fd;
+    char nombre[MAX_NOMBRE];
+    mqd_t host;
+} Abierto;
+
+typedef struct
+{
+    mqd_t casilla;
+    int fd[MAX_ABIERTOS];
+    int nAbiertos;
+} Sesion;
+
+typedef struct
+{
+    SList* sesiones;
+    int maxIDlocal;
+    Abierto abiertos[MAX_ABIERTOS];
+    int nAbiertos;
+} WorkerData;
 #endif //__ESTRUCTURAS_H__
