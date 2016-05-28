@@ -54,18 +54,23 @@ void* worker(void* params_v)
                 break;
                 
                 case DEL:
+                    helpDEL(params, &datos, &msg);
                 break;
                 
                 case OPN:
+                    helpOPN(params, &datos, &msg);
                 break;
                 
                 case WRT:
+                    helpWRT(params, &datos, &msg);
                 break;
                 
                 case REA:
+                    helpREA(params, &datos, &msg);
                 break;
                 
                 case CLO:
+                    helpCLO(params, &datos, &msg);
                 break;
             }
         }

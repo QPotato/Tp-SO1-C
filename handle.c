@@ -177,7 +177,6 @@ void handleDEL(ParametrosWorker params, WorkerData *data, Msg *msg)
 
 /*
     handle OPN
-    a medio implementar
 */
 void handleOPN(ParametrosWorker params, WorkerData *data, Msg *msg)
 {
@@ -206,7 +205,7 @@ void handleOPN(ParametrosWorker params, WorkerData *data, Msg *msg)
     {
         char locales[MAX_NOMBRE * MAX_ARCHIVOS];
         getLocalFiles(id, workers, locales);
-        if(strstr(locales, rqst.nombre_archivo) != NULL )            //TODO: fijarse que no esté abierto.
+        if(strstr(locales, rqst.nombre_archivo) != NULL )
         {
             //tengo el archivo!
             if(estaAbierto(rqst.nombre_archivo, abiertos, nAbiertos))
@@ -243,8 +242,54 @@ void handleOPN(ParametrosWorker params, WorkerData *data, Msg *msg)
         else
         {
             //no lo tengo, quién lo tiene?
-            printf("not implemented, archivo existe pero lo tiene otro\n");
-            enviarRespuesta(self, cumpa, "not implemented, archivo existe pero lo tiene otro\n");
+            Msg helpMsg = msgCreate(self, T_AYUDA, &rqst, sizeof(rqst));
+            msgBroadcastPiola(workers, helpMsg, sizeof(rqst));
+            int flag = 0;
+            for(int i = 0; i < N_WORKERS - 1; i++)
+            {
+                Msg helpReceive;
+                if(msgReceive(self, &helpReceive) <= 0)
+                    fprintf(stderr, "flashié worker receive\n");
+                if(helpReceive.tipo == T_DEVUELVO_AYUDA)
+                {
+                    int FD = *((int*)helpReceive.datos);
+                    msgDestroy(&helpReceive);
+                    
+                    
+                    if(FD == HELP_OPN_NOTFOUND)
+                    {
+                        continue;
+                    }
+                    else if(FD == HELP_OPN_INUSE)
+                    {
+                        enviarRespuesta(self, cumpa,"Error: archivo ya abierto\n");
+                        flag = 1;
+                    }
+                    else
+                    {
+                        //este lo abrio y me mando el fd!
+                        
+                        //modifico la sesion
+                        Sesion *ses = (Sesion *)slist_nth(sesiones, sesionID);
+                        ses->fd[ses->nAbiertos] = FD;
+                        ses->nAbiertos++;
+                        
+                        //mando la respuesta
+                        char respuesta[20];
+                        sprintf(respuesta, "ok, FD: %d\n", FD);
+                        enviarRespuesta(self, cumpa, respuesta);
+                        
+                        flag = 1;
+                    }
+                }
+                else
+                {
+                    if(msgSend(self, helpReceive) < 0)
+                        fprintf(stderr, "flashié devolviendome un mensaje (en LSD)\n");
+                }
+            }
+            if(!flag)
+                enviarRespuesta(self, cumpa,"Error: archivo no encontrado\n");
         }
     }
     

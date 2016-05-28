@@ -6,32 +6,13 @@
 #define MAX_ARCHIVOS 1024
 #define MAX_ABIERTOS MAX_ARCHIVOS
 
+#define HELP_OPN_NOTFOUND -1
+#define HELP_OPN_INUSE -2
+
 #include "estructuras.h"
 #include "SList.h"
 #include "mensajes.h"
 #include "procesos.h"
-
-typedef struct
-{
-    int fd;
-    char nombre[MAX_NOMBRE];
-    mqd_t host;
-} Abierto;
-
-typedef struct
-{
-    mqd_t casilla;
-    int fd[MAX_ABIERTOS];
-    int nAbiertos;
-} Sesion;
-
-typedef struct
-{
-    SList* sesiones;
-    int maxIDlocal;
-    Abierto abiertos[MAX_ABIERTOS];
-    int nAbiertos;
-} WorkerData;
 
 //Funciones Auxiliares
 int mqd_t_comp(void* a, void* b);
@@ -62,5 +43,15 @@ void handleBYE(ParametrosWorker params, WorkerData *data, Msg *msg);
 
 //Handles de pedidos de ayuda
 void helpLSD(ParametrosWorker params, WorkerData *data, Msg *msg);
+
+void helpDEL(ParametrosWorker params, WorkerData *data, Msg *msg);
+
+void helpOPN(ParametrosWorker params, WorkerData *data, Msg *msg);
+
+void helpWRT(ParametrosWorker params, WorkerData *data, Msg *msg);
+
+void helpREA(ParametrosWorker params, WorkerData *data, Msg *msg);
+
+void helpCLO(ParametrosWorker params, WorkerData *data, Msg *msg);
 
 #endif // __WORKER_H__
