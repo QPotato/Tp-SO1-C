@@ -80,11 +80,7 @@ void handleLSD(ParametrosWorker params, WorkerData *data, Msg *msg)
     {
         //no está conectado, devuelvo error.
         enviarRespuesta(self, cumpa, "Error: no conectado.\n");
-    }    
-    
-    //epilogo
-    data->sesiones = sesiones;
-    data->maxIDlocal = maxIDlocal;
+    }
 }
 
 
@@ -131,10 +127,6 @@ void handleCRE(ParametrosWorker params, WorkerData *data, Msg *msg)
         //no está conectado, devuelvo error.
         enviarRespuesta(self, cumpa, "Error: no conectado.\n");
     }
-    
-    //epilogo
-    data->sesiones = sesiones;
-    data->maxIDlocal = maxIDlocal;
 }
 
 
@@ -169,10 +161,6 @@ void handleDEL(ParametrosWorker params, WorkerData *data, Msg *msg)
         //no está conectado, devuelvo error.
         enviarRespuesta(self, cumpa, "Error: no conectado.\n");
     }
-    
-    //epilogo
-    data->sesiones = sesiones;
-    data->maxIDlocal = maxIDlocal;
 }
 
 /*
@@ -200,102 +188,97 @@ void handleOPN(ParametrosWorker params, WorkerData *data, Msg *msg)
     if((sesionID = buscarSesion(cumpa, sesiones)) < 0)
     {
         enviarRespuesta(self, cumpa, "Error: no conectado.\n");
+        return;
     }
-    else
+    
+    char locales[MAX_NOMBRE * MAX_ARCHIVOS];
+    getLocalFiles(id, workers, locales);
+    //Si tengo el archivo...
+    if(strstr(locales, rqst.nombre_archivo) != NULL )
     {
-        char locales[MAX_NOMBRE * MAX_ARCHIVOS];
-        getLocalFiles(id, workers, locales);
-        if(strstr(locales, rqst.nombre_archivo) != NULL )
+        //Si esta abierto...
+        if(estaAbierto(rqst.nombre_archivo, abiertos, nAbiertos))
         {
-            //tengo el archivo!
-            if(estaAbierto(rqst.nombre_archivo, abiertos, nAbiertos))
+            enviarRespuesta(self, cumpa, "Error: archivo ya abierto\n");
+            return;
+        }
+        
+        char file[MAX_NOMBRE + 15];
+        sprintf(file, "data/worker%d/%s", id, rqst.nombre_archivo);
+        int FD = open(file, O_RDWR);
+        
+        //creo el abierto
+        Abierto new;
+        new.fd = FD;
+        strcpy(new.nombre, rqst.nombre_archivo);
+        new.host = self;
+        
+        //lo agrego a mi lista
+        data->abiertos[data->nAbiertos] = new;
+        data->nAbiertos++;
+        
+        //modifico la sesion
+        Sesion *ses = (Sesion *)slist_nth(sesiones, sesionID);
+        ses->fd[ses->nAbiertos] = FD;
+        ses->nAbiertos++;
+        
+        //envio la respuesta
+        char res[128];
+        sprintf(res, "OK FD %d\n", FD);
+        enviarRespuesta(self, cumpa, res);
+        return;
+    }
+    
+    //no lo tengo, quién lo tiene?
+    Msg helpMsg = msgCreate(self, T_AYUDA, &rqst, sizeof(rqst));
+    msgBroadcastPiola(workers, helpMsg, sizeof(rqst));
+    int flag = 0;
+    for(int i = 0; i < N_WORKERS - 1; i++)
+    {
+        Msg helpReceive;
+        if(msgReceive(self, &helpReceive) <= 0)
+            fprintf(stderr, "flashié worker receive\n");
+        if(helpReceive.tipo == T_DEVUELVO_AYUDA)
+        {
+            int FD = *((int*)helpReceive.datos);
+            msgDestroy(&helpReceive);
+            
+            
+            if(FD == HELP_OPN_NOTFOUND)
             {
-                enviarRespuesta(self, cumpa, "Error: archivo ya abierto\n");
+                continue;
+            }
+            else if(FD == HELP_OPN_INUSE)
+            {
+                enviarRespuesta(self, cumpa,"Error: archivo ya abierto\n");
+                flag = 1;
             }
             else
             {
-                char file[MAX_NOMBRE + 15];
-                sprintf(file, "data/worker%d/%s", id, rqst.nombre_archivo);
-                int FD = open(file, O_RDWR);
-                
-                //creo el abierto
-                Abierto new;
-                new.fd = FD;
-                strcpy(new.nombre, rqst.nombre_archivo);
-                new.host = self;
-                
-                //lo agrego a mi lista
-                data->abiertos[data->nAbiertos] = new;
-                data->nAbiertos++;
+                //este lo abrio y me mando el fd!
                 
                 //modifico la sesion
                 Sesion *ses = (Sesion *)slist_nth(sesiones, sesionID);
                 ses->fd[ses->nAbiertos] = FD;
                 ses->nAbiertos++;
                 
-                //envio la respuesta
-                char res[128];
-                sprintf(res, "OK FD %d\n", FD);
-                enviarRespuesta(self, cumpa, res);
+                //mando la respuesta
+                char respuesta[20];
+                sprintf(respuesta, "ok, FD: %d\n", FD);
+                enviarRespuesta(self, cumpa, respuesta);
+                
+                flag = 1;
             }
         }
+        //Si no es un mensaje en respuesta al broadcast, me lo reenvio para usarlo despues.
         else
         {
-            //no lo tengo, quién lo tiene?
-            Msg helpMsg = msgCreate(self, T_AYUDA, &rqst, sizeof(rqst));
-            msgBroadcastPiola(workers, helpMsg, sizeof(rqst));
-            int flag = 0;
-            for(int i = 0; i < N_WORKERS - 1; i++)
-            {
-                Msg helpReceive;
-                if(msgReceive(self, &helpReceive) <= 0)
-                    fprintf(stderr, "flashié worker receive\n");
-                if(helpReceive.tipo == T_DEVUELVO_AYUDA)
-                {
-                    int FD = *((int*)helpReceive.datos);
-                    msgDestroy(&helpReceive);
-                    
-                    
-                    if(FD == HELP_OPN_NOTFOUND)
-                    {
-                        continue;
-                    }
-                    else if(FD == HELP_OPN_INUSE)
-                    {
-                        enviarRespuesta(self, cumpa,"Error: archivo ya abierto\n");
-                        flag = 1;
-                    }
-                    else
-                    {
-                        //este lo abrio y me mando el fd!
-                        
-                        //modifico la sesion
-                        Sesion *ses = (Sesion *)slist_nth(sesiones, sesionID);
-                        ses->fd[ses->nAbiertos] = FD;
-                        ses->nAbiertos++;
-                        
-                        //mando la respuesta
-                        char respuesta[20];
-                        sprintf(respuesta, "ok, FD: %d\n", FD);
-                        enviarRespuesta(self, cumpa, respuesta);
-                        
-                        flag = 1;
-                    }
-                }
-                else
-                {
-                    if(msgSend(self, helpReceive) < 0)
-                        fprintf(stderr, "flashié devolviendome un mensaje (en LSD)\n");
-                }
-            }
-            if(!flag)
-                enviarRespuesta(self, cumpa,"Error: archivo no encontrado\n");
+            if(msgSend(self, helpReceive) < 0)
+                fprintf(stderr, "flashié devolviendome un mensaje (en LSD)\n");
         }
     }
-    
-    //epilogo
-    data->sesiones = sesiones;
-    data->maxIDlocal = maxIDlocal;
+    if(!flag)
+        enviarRespuesta(self, cumpa,"Error: archivo no encontrado\n");
 }
 
 /*
@@ -316,14 +299,10 @@ void handleREA(ParametrosWorker params, WorkerData *data, Msg *msg)
     //workers = params.casillasWorkers;
     
     SList* sesiones = data->sesiones;
-    int maxIDlocal = data->maxIDlocal;
 
     //handle...
     printf("No implementado\n");
     enviarRespuesta(self, cumpa, "Error: no implementado.\n");
-    //epilogo
-    data->sesiones = sesiones;
-    data->maxIDlocal = maxIDlocal;
 }
 
 /*
@@ -344,15 +323,10 @@ void handleWRT(ParametrosWorker params, WorkerData *data, Msg *msg)
     //workers = params.casillasWorkers;
     
     SList* sesiones = data->sesiones;
-    int maxIDlocal = data->maxIDlocal;
 
     //handle...
     printf("No implementado\n");
     enviarRespuesta(self, cumpa, "Error: no implementado.\n");
-    
-    //epilogo
-    data->sesiones = sesiones;
-    data->maxIDlocal = maxIDlocal;
 }
 
 /*
@@ -373,15 +347,10 @@ void handleCLO(ParametrosWorker params, WorkerData *data, Msg *msg)
     //workers = params.casillasWorkers;
     
     SList* sesiones = data->sesiones;
-    int maxIDlocal = data->maxIDlocal;
 
     //handle...
     printf("No implementado\n");
     enviarRespuesta(self, cumpa, "Error: no implementado.\n");
-        
-    //epilogo
-    data->sesiones = sesiones;
-    data->maxIDlocal = maxIDlocal;
 }
 
 /*

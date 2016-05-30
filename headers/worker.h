@@ -3,8 +3,6 @@
 #define __WORKER_H__
 
 #define N_WORKERS 6
-#define MAX_ARCHIVOS 1024
-#define MAX_ABIERTOS MAX_ARCHIVOS
 
 #define HELP_OPN_NOTFOUND -1
 #define HELP_OPN_INUSE -2
@@ -53,5 +51,20 @@ void helpWRT(ParametrosWorker params, WorkerData *data, Msg *msg);
 void helpREA(ParametrosWorker params, WorkerData *data, Msg *msg);
 
 void helpCLO(ParametrosWorker params, WorkerData *data, Msg *msg);
+
+#define PROLOGO \
+    mqd_t cumpa = msg->remitente; \
+    Request rqst = *(Request*)(msg->datos); \
+    msgDestroy(msg); \
+    \
+    int id = params.id; \
+    mqd_t self = params.casilla; \
+    mqd_t *workers = params.casillasWorkers; \
+    \
+    SList* sesiones = data->sesiones; \
+    int maxIDlocal = data->maxIDlocal; \
+    
+
+
 
 #endif // __WORKER_H__

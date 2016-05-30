@@ -19,6 +19,8 @@ typedef int Comand;
 
 #define BUFF_SIZE 10000 //esto va en contra de eso de los tamaños arbitrarios de mensajes
 #define MAX_NOMBRE 128
+#define MAX_ARCHIVOS 1024
+#define MAX_ABIERTOS MAX_ARCHIVOS
 
 
 typedef struct _Request {
