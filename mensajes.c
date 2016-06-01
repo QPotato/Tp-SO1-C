@@ -45,8 +45,9 @@ int msgBroadcast(mqd_t remitente, mqd_t *receptores, Request* helpRequest)
     return 0;
 }
 
-int msgBroadcastPiola(mqd_t *receptores, Msg mensaje, size_t dataSize)
+int msgBroadcastPiola(mqd_t *receptores, Msg mensaje, size_t dataSize, void* arregloRespuestas, size_t size)
 {
+    mqd_t remitente = mensaje.remitente;
     for(int i = 0; i < N_WORKERS; i++)
     {
         if(receptores[i] != mensaje.remitente)
@@ -56,7 +57,26 @@ int msgBroadcastPiola(mqd_t *receptores, Msg mensaje, size_t dataSize)
         }
     }
     msgDestroy(&mensaje);
-    return 0;
+
+    for(int i = 0; i < N_WORKERS - 1; i++)
+    {
+        Msg helpReceive;
+        if(msgReceive(remitente, &helpReceive) <= 0)
+            fprintf(stderr, "flashié worker receive\n");
+        if(helpReceive.tipo == T_DEVUELVO_AYUDA)
+        {
+            memcpy(arregloRespuestas, helpReceive.datos, size);
+            arregloRespuestas += size;
+            msgDestroy(&helpReceive);
+        }
+        else
+        {
+            //TODO: guardar en un buffer y reenviar todos juntos
+            if(msgSend(remitente, helpReceive) < 0)
+                fprintf(stderr, "flashié devolviendome un mensaje (en LSD)\n");
+        }
+    }
+    return;
 }
 
 //recibir un mensaje, devuelve el size

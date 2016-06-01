@@ -15,3 +15,6 @@ int estaAbierto(const char* nombreAr, Abierto* abiertos, int nAbiertos);
 
 //"Macro" para enviarle al proc_socket la respuesta a la request del usuario.
 void enviarRespuesta(mqd_t remitente,mqd_t procSocket, char* resStr);
+
+//Labura con las respuestas del broadcast que manda OPN
+int handleOPNBroadcast(ParametrosWorker params, WorkerData *data, int* FDs, int sesionID);

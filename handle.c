@@ -230,55 +230,25 @@ void handleOPN(ParametrosWorker params, WorkerData *data, Msg *msg)
     }
     
     //no lo tengo, quién lo tiene?
+    int FDs[N_WORKERS - 1];
     Msg helpMsg = msgCreate(self, T_AYUDA, &rqst, sizeof(rqst));
-    msgBroadcastPiola(workers, helpMsg, sizeof(rqst));
-    int flag = 0;
-    for(int i = 0; i < N_WORKERS - 1; i++)
+    msgBroadcastPiola(workers, helpMsg, sizeof(rqst), FDs, sizeof(int));
+    int FD = handleOPNBroadcast(params, data, FDs, sesionID);
+    char respuesta[20];
+    switch(FD)
     {
-        Msg helpReceive;
-        if(msgReceive(self, &helpReceive) <= 0)
-            fprintf(stderr, "flashié worker receive\n");
-        if(helpReceive.tipo == T_DEVUELVO_AYUDA)
-        {
-            int FD = *((int*)helpReceive.datos);
-            msgDestroy(&helpReceive);
+        case HELP_OPN_NOTFOUND:
+            enviarRespuesta(self, cumpa,"Error: archivo no encontrado\n");
+            break;
             
+        case HELP_OPN_INUSE:
+            enviarRespuesta(self, cumpa,"Error: archivo ya abierto\n");
+            break;
             
-            if(FD == HELP_OPN_NOTFOUND)
-            {
-                continue;
-            }
-            else if(FD == HELP_OPN_INUSE)
-            {
-                enviarRespuesta(self, cumpa,"Error: archivo ya abierto\n");
-                flag = 1;
-            }
-            else
-            {
-                //este lo abrio y me mando el fd!
-                
-                //modifico la sesion
-                Sesion *ses = (Sesion *)slist_nth(sesiones, sesionID);
-                ses->fd[ses->nAbiertos] = FD;
-                ses->nAbiertos++;
-                
-                //mando la respuesta
-                char respuesta[20];
-                sprintf(respuesta, "ok, FD: %d\n", FD);
-                enviarRespuesta(self, cumpa, respuesta);
-                
-                flag = 1;
-            }
-        }
-        //Si no es un mensaje en respuesta al broadcast, me lo reenvio para usarlo despues.
-        else
-        {
-            if(msgSend(self, helpReceive) < 0)
-                fprintf(stderr, "flashié devolviendome un mensaje (en LSD)\n");
-        }
+        default:
+            sprintf(respuesta, "OK FD %d\n", FD);
+            enviarRespuesta(self, cumpa, respuesta);
     }
-    if(!flag)
-        enviarRespuesta(self, cumpa,"Error: archivo no encontrado\n");
 }
 
 /*

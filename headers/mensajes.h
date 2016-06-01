@@ -37,7 +37,7 @@ int msgSend(mqd_t queue, Msg mensaje);
 int msgBroadcast(mqd_t remitente, mqd_t *receptores, Request* helpRequest);
 
 //mandar un mensaje a todos los workers, version piola
-int msgBroadcastPiola(mqd_t *receptores, Msg mensaje, size_t dataSize);
+int msgBroadcastPiola(mqd_t *receptores, Msg mensaje, size_t dataSize, void* arregloRespuestas, size_t size);
 
 //recibir un mensaje, devuelve el size
 int msgReceive(mqd_t queue, Msg *mensaje);

@@ -85,3 +85,47 @@ void enviarRespuesta(mqd_t remitente,mqd_t procSocket, char* resStr)
     if(msgSend(procSocket, respuesta) < 0)
         fprintf(stderr, "flashié enviarRespuesta\n");
 }
+
+int handleOPNBroadcast(ParametrosWorker params, WorkerData *data, int* FDs, int sesionID)
+{
+    for(int i = 0; i < N_WORKERS - 1; i++)
+    {
+        if(FDs[i] == HELP_OPN_INUSE)
+        {
+            return HELP_OPN_INUSE;
+        }
+        if(FDs[i] >= 0)
+        {
+            SList* sesiones = data->sesiones;
+            Sesion *ses = (Sesion *)slist_nth(sesiones, sesionID);
+            ses->fd[ses->nAbiertos] = FDs[i];
+            ses->nAbiertos++;
+            return FDs[i];
+        }
+    }
+    return HELP_OPN_NOTFOUND;
+}
+
+void respuestasBroadcast(mqd_t self, void** arregloRespuestas)
+{
+    for(int i = 0; i < N_WORKERS - 1; i++)
+    {
+        Msg helpReceive;
+        if(msgReceive(self, &helpReceive) <= 0)
+            fprintf(stderr, "flashié worker receive\n");
+        if(helpReceive.tipo == T_DEVUELVO_AYUDA)
+        {
+            *arregloRespuestas = helpReceive.datos;
+            arregloRespuestas++;
+            msgDestroy(&helpReceive);
+        }
+        else
+        {
+            //TODO: guardar en un buffer y reenviar todos juntos
+            if(msgSend(self, helpReceive) < 0)
+                fprintf(stderr, "flashié devolviendome un mensaje (en LSD)\n");
+        }
+    }
+    return;
+}
+
