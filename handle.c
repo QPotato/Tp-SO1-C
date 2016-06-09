@@ -155,6 +155,7 @@ void handleDEL(ParametrosWorker params, WorkerData *data, Msg *msg)
     {
         printf("No implementado DEL\n");
         enviarRespuesta(self, cumpa, "Error: no implementado.\n");
+        
     }
     else
     {
@@ -203,24 +204,20 @@ void handleOPN(ParametrosWorker params, WorkerData *data, Msg *msg)
             return;
         }
         
+        //lo abro en el FS local
         char file[MAX_NOMBRE + 15];
         sprintf(file, "data/worker%d/%s", id, rqst.nombre_archivo);
         int FD = open(file, O_RDWR);
         
         //creo el abierto
-        Abierto new;
-        new.fd = FD;
-        strcpy(new.nombre, rqst.nombre_archivo);
-        new.host = self;
+        Abierto new = createAbierto(FD, rqst.nombre_archivo, self);
         
         //lo agrego a mi lista
-        data->abiertos[data->nAbiertos] = new;
-        data->nAbiertos++;
+        agregarAbiertoEnData(data, new);
         
         //modifico la sesion
         Sesion *ses = (Sesion *)slist_nth(sesiones, sesionID);
-        ses->fd[ses->nAbiertos] = FD;
-        ses->nAbiertos++;
+        agregarAbiertoEnSesion(ses, FD);
         
         //envio la respuesta
         char res[128];

@@ -63,6 +63,22 @@ void getFiles(int id, mqd_t *workers, char *nombres)
     return;
 }
 
+//Devuelve 1 si el archivo existe, no importa quien lo tenga. Sino, 0.
+bool existeArchivo(int id, mqd_t *workers, char *nombre)
+{
+    char file[MAX_NOMBRE + 15];
+    char nombres[(MAX_NOMBRE + 15) * MAX_ARCHIVOS * N_WORKERS];
+    getFiles(id, workers, nombres);
+    sprintf(file, "data/worker%d/%s", id, nombre);
+    
+    if(strstr(nombres, rqst.nombre_archivo) == NULL)
+    {
+        FILE* dummy = fopen(file, "a");
+        fclose(dummy);
+        enviarRespuesta(self, cumpa, "OK\n");
+    }
+
+}
 //Devuelve el indice de la sesion en la lista de sesiones o -1 si no esta.
 int buscarSesion(mqd_t cumpa, SList* sesiones)
 {

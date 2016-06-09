@@ -76,14 +76,10 @@ void helpOPN(ParametrosWorker params, WorkerData *data, Msg *msg)
             FD = open(file, O_RDWR);
             
             //creo el abierto
-            Abierto new;
-            new.fd = FD;
-            strcpy(new.nombre, rqst.nombre_archivo);
-            new.host = self;
+            Abierto new = createAbierto(FD, rqst.nombre_archivo, self);
             
             //lo agrego a mi lista
-            data->abiertos[data->nAbiertos] = new;
-            data->nAbiertos++;
+            agregarAbiertoEnData(data, new);
         }
     }
     else

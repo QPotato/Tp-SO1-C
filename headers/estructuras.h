@@ -37,12 +37,16 @@ typedef struct
     mqd_t host;
 } Abierto;
 
+Abierto createAbierto(int fd, const char* nombre, mqd_t host);
+
 typedef struct
 {
     mqd_t casilla;
     int fd[MAX_ABIERTOS];
     int nAbiertos;
 } Sesion;
+
+void agregarAbiertoEnSesion(Sesion* sesion, int nuevo);
 
 typedef struct
 {
@@ -51,4 +55,6 @@ typedef struct
     Abierto abiertos[MAX_ABIERTOS];
     int nAbiertos;
 } WorkerData;
+
+void agregarAbiertoEnData(WorkerData* data, Abierto nuevo);
 #endif //__ESTRUCTURAS_H__
