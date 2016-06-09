@@ -26,21 +26,20 @@ void handleCON(ParametrosWorker params, WorkerData *data, Msg *msg)
     {
         //ya está conectado, devuelvo error.
         enviarRespuesta(self, cumpa, "Error: ya conectado.\n");
+        return;
     }
-    else
-    {
-        //no está conectado, devuelvo la ID.
-        int userID = maxIDlocal * N_WORKERS + id;
-        maxIDlocal++;
-        Sesion* sn = malloc(sizeof(Sesion));
-        sn->casilla = cumpa;
-        sn->nAbiertos = 0;
-        sesiones = slist_append(sesiones, (void*) sn);
-        
-        char res[128];
-        sprintf(res, "OK ID %d\n", userID);
-        enviarRespuesta(self, cumpa, res);
-    }
+
+    //Todo ok, lo conecto y devuelvo la ID.
+    int userID = maxIDlocal * N_WORKERS + id;
+    maxIDlocal++;
+    Sesion* sn = malloc(sizeof(Sesion));
+    sn->casilla = cumpa;
+    sn->nAbiertos = 0;
+    sesiones = slist_append(sesiones, (void*) sn);
+    
+    char res[128];
+    sprintf(res, "OK ID %d\n", userID);
+    enviarRespuesta(self, cumpa, res);
     
     //epilogo
     data->sesiones = sesiones;
@@ -68,19 +67,19 @@ void handleLSD(ParametrosWorker params, WorkerData *data, Msg *msg)
     int maxIDlocal = data->maxIDlocal;
 
     //handle...
-    if(buscarSesion(cumpa, sesiones) >= 0)
+    
+    // Me fijo que este conectado
+    if(buscarSesion(cumpa, sesiones) < 0)
     {
-        //está conectado, devuelvo los archivos.
-        char nombres[MAX_NOMBRE * MAX_ARCHIVOS * N_WORKERS];
-        getFiles(id, workers, nombres);
-        strcat(nombres, "\n");
-        enviarRespuesta(self, cumpa, nombres);
-    }
-    else
-    {
-        //no está conectado, devuelvo error.
         enviarRespuesta(self, cumpa, "Error: no conectado.\n");
+        return;
     }
+    
+    // Todo ok, devuelvo los archivos.
+    char nombres[MAX_NOMBRE * MAX_ARCHIVOS * N_WORKERS];
+    getFiles(id, workers, nombres);
+    strcat(nombres, "\n");
+    enviarRespuesta(self, cumpa, nombres);
 }
 
 
@@ -104,29 +103,27 @@ void handleCRE(ParametrosWorker params, WorkerData *data, Msg *msg)
     int maxIDlocal = data->maxIDlocal;
 
     //handle...
-    if(buscarSesion(cumpa, sesiones) >= 0)
+    
+    // Me fijo que este conectado
+    if(buscarSesion(cumpa, sesiones) < 0)
     {
-        char file[MAX_NOMBRE + 15];
-        char nombres[(MAX_NOMBRE + 15) * MAX_ARCHIVOS * N_WORKERS];
-        getFiles(id, workers, nombres);
-        sprintf(file, "data/worker%d/%s", id, rqst.nombre_archivo);
-        
-        if(strstr(nombres, rqst.nombre_archivo) == NULL)
-        {
-            FILE* dummy = fopen(file, "a");
-            fclose(dummy);
-            enviarRespuesta(self, cumpa, "OK\n");
-        }
-        else
-        {
-            enviarRespuesta(self, cumpa, "ERROR el archivo ya existe\n");
-        }
-    }
-    else
-    {
-        //no está conectado, devuelvo error.
         enviarRespuesta(self, cumpa, "Error: no conectado.\n");
+        return;
     }
+    
+    // Reviso que no exista ya ese archivo
+    if(existeArchivo(id, workers, rqst.nombre_archivo))
+    {
+        enviarRespuesta(self, cumpa, "ERROR el archivo ya existe\n");
+        return;
+    }
+    
+    // Todo ok, lo creo.
+    char file[MAX_NOMBRE + 15];
+    sprintf(file, "data/worker%d/%s", id, rqst.nombre_archivo);
+    FILE* dummy = fopen(file, "a");
+    fclose(dummy);
+    enviarRespuesta(self, cumpa, "OK\n");
 }
 
 
@@ -138,29 +135,60 @@ void handleDEL(ParametrosWorker params, WorkerData *data, Msg *msg)
 {
     //data necesaria del mensaje
     mqd_t cumpa = msg->remitente;
-    //Request rqst = *(Request*)(msg->datos);
+    Request rqst = *(Request*)(msg->datos);
     msgDestroy(msg);
     
     //data necesaria del worker
-    //int id = params.id;
+    int id = params.id;
     mqd_t self = params.casilla;
-    //mqd_t *workers;
-    //workers = params.casillasWorkers;
+    mqd_t *workers = params.casillasWorkers;
     
     SList* sesiones = data->sesiones;
     int maxIDlocal = data->maxIDlocal;
 
     //handle...
-    if(buscarSesion(cumpa, sesiones) >= 0)
+    
+    // Me fijo que este conectado
+    if(buscarSesion(cumpa, sesiones) < 0)
     {
-        printf("No implementado DEL\n");
-        enviarRespuesta(self, cumpa, "Error: no implementado.\n");
-        
+        enviarRespuesta(self, cumpa, "Error: no conectado.\n");
+        return;
+    }
+    
+    // Reviso que exista ese archivo
+    if(!existeArchivo(id, workers, rqst.nombre_archivo))
+    {
+        enviarRespuesta(self, cumpa, "ERROR archivo inexistente\n");
+        return;
+    }
+    
+    // Todo ok, lo tengo que borrar.
+    if(esMio(id, rqst.nombre_archivo))
+    {
+        char cmd[MAX_NOMBRE + 15];
+        sprintf(cmd, "rm data/worker%d/%s", id, rqst.nombre_archivo);
+        system(cmd);
+        enviarRespuesta(self, cumpa,"OK\n");
     }
     else
     {
-        //no está conectado, devuelvo error.
-        enviarRespuesta(self, cumpa, "Error: no conectado.\n");
+        int respuestas[N_WORKERS - 1];
+        Msg helpMsg = msgCreate(self, T_AYUDA, &rqst, sizeof(rqst));
+        msgBroadcastPiola(workers, helpMsg, sizeof(rqst), respuestas, sizeof(int));
+        int res = handleDELBroadcast(respuestas);
+        switch(res)
+        {
+            case HELP_DEL_OK:
+                enviarRespuesta(self, cumpa,"OK\n");
+                break;
+            case HELP_DEL_INUSE:
+                enviarRespuesta(self, cumpa,"Error: Archivo abierto\n");
+                break;
+            case HELP_DEL_NOTFOUND:
+                enviarRespuesta(self, cumpa,"Error: Se pudrio todo\n");
+                printf("Flashie en CLO\n");
+                break;
+        }
     }
 }
 
@@ -186,18 +214,17 @@ void handleOPN(ParametrosWorker params, WorkerData *data, Msg *msg)
     
     //handle...
     int sesionID;
+    // Reviso que este conectado y de paso averiguo su ID.
     if((sesionID = buscarSesion(cumpa, sesiones)) < 0)
     {
         enviarRespuesta(self, cumpa, "Error: no conectado.\n");
         return;
     }
     
-    char locales[MAX_NOMBRE * MAX_ARCHIVOS];
-    getLocalFiles(id, workers, locales);
-    //Si tengo el archivo...
-    if(strstr(locales, rqst.nombre_archivo) != NULL )
+    // Lo tengo yo?
+    if(esMio(id, rqst.nombre_archivo))
     {
-        //Si esta abierto...
+        // Reviso que no este ya abierto.
         if(estaAbierto(rqst.nombre_archivo, abiertos, nAbiertos))
         {
             enviarRespuesta(self, cumpa, "Error: archivo ya abierto\n");
@@ -225,26 +252,29 @@ void handleOPN(ParametrosWorker params, WorkerData *data, Msg *msg)
         enviarRespuesta(self, cumpa, res);
         return;
     }
-    
-    //no lo tengo, quién lo tiene?
-    int FDs[N_WORKERS - 1];
-    Msg helpMsg = msgCreate(self, T_AYUDA, &rqst, sizeof(rqst));
-    msgBroadcastPiola(workers, helpMsg, sizeof(rqst), FDs, sizeof(int));
-    int FD = handleOPNBroadcast(params, data, FDs, sesionID);
-    char respuesta[20];
-    switch(FD)
+    else
     {
-        case HELP_OPN_NOTFOUND:
-            enviarRespuesta(self, cumpa,"Error: archivo no encontrado\n");
-            break;
-            
-        case HELP_OPN_INUSE:
-            enviarRespuesta(self, cumpa,"Error: archivo ya abierto\n");
-            break;
-            
-        default:
-            sprintf(respuesta, "OK FD %d\n", FD);
-            enviarRespuesta(self, cumpa, respuesta);
+        // No lo tengo, quién lo tiene?
+        int FDs[N_WORKERS - 1];
+        Msg helpMsg = msgCreate(self, T_AYUDA, &rqst, sizeof(rqst));
+        msgBroadcastPiola(workers, helpMsg, sizeof(rqst), FDs, sizeof(int));
+        int FD = handleOPNBroadcast(params, data, FDs, sesionID);
+        char respuesta[20];
+        
+        switch(FD)
+        {
+            case HELP_OPN_NOTFOUND:
+                enviarRespuesta(self, cumpa,"Error: archivo no encontrado\n");
+                break;
+                
+            case HELP_OPN_INUSE:
+                enviarRespuesta(self, cumpa,"Error: archivo ya abierto\n");
+                break;
+                
+            default:
+                sprintf(respuesta, "OK FD %d\n", FD);
+                enviarRespuesta(self, cumpa, respuesta);
+        }
     }
 }
 

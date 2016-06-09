@@ -14,7 +14,7 @@ int mqd_t_comp(void* a, void* b)
 }
 
 //devuelve en char *nombres un string con los archivos locales separados por ' '
-void getLocalFiles(int id, mqd_t *workers, char *nombres)
+void getLocalFiles(int id, char *nombres)
 {
     char dir[20];
     nombres[0] = '\0';
@@ -37,7 +37,7 @@ void getLocalFiles(int id, mqd_t *workers, char *nombres)
 void getFiles(int id, mqd_t *workers, char *nombres)
 {
     mqd_t self = workers[id];
-    getLocalFiles(id, workers, nombres);
+    getLocalFiles(id, nombres);
     
     //creo el request
     Request helpRequest;
@@ -64,21 +64,29 @@ void getFiles(int id, mqd_t *workers, char *nombres)
 }
 
 //Devuelve 1 si el archivo existe, no importa quien lo tenga. Sino, 0.
-bool existeArchivo(int id, mqd_t *workers, char *nombre)
+int existeArchivo(int id, mqd_t *workers, char *nombre)
 {
-    char file[MAX_NOMBRE + 15];
     char nombres[(MAX_NOMBRE + 15) * MAX_ARCHIVOS * N_WORKERS];
     getFiles(id, workers, nombres);
-    sprintf(file, "data/worker%d/%s", id, nombre);
     
-    if(strstr(nombres, rqst.nombre_archivo) == NULL)
-    {
-        FILE* dummy = fopen(file, "a");
-        fclose(dummy);
-        enviarRespuesta(self, cumpa, "OK\n");
-    }
-
+    if(strstr(nombres, nombre) == NULL)
+        return 0;
+    else
+        return 1;
 }
+
+//Asumiendo que el archivo existe, retorna 1 si es local, 0 si lo tiene otro.
+int esMio(int id, char *nombre)
+{
+    char locales[MAX_NOMBRE * MAX_ARCHIVOS];
+    getLocalFiles(id, locales);
+    //Si tengo el archivo...
+    if(strstr(locales, nombre) != NULL )
+        return 1;
+    else
+        return 0;
+}
+
 //Devuelve el indice de la sesion en la lista de sesiones o -1 si no esta.
 int buscarSesion(mqd_t cumpa, SList* sesiones)
 {
@@ -102,6 +110,22 @@ void enviarRespuesta(mqd_t remitente,mqd_t procSocket, char* resStr)
         fprintf(stderr, "flashié enviarRespuesta\n");
 }
 
+int handleDELBroadcast(int* respuestas)
+{
+    for(int i = 0; i < N_WORKERS - 1; i++)
+    {
+        if(respuestas[i] == HELP_DEL_INUSE)
+        {
+            return HELP_DEL_INUSE;
+        }
+        if(respuestas[i] == HELP_DEL_OK)
+        {
+            return HELP_DEL_OK;
+        }
+    }
+    return HELP_DEL_NOTFOUND;
+}
+
 int handleOPNBroadcast(ParametrosWorker params, WorkerData *data, int* FDs, int sesionID)
 {
     for(int i = 0; i < N_WORKERS - 1; i++)
@@ -121,27 +145,3 @@ int handleOPNBroadcast(ParametrosWorker params, WorkerData *data, int* FDs, int 
     }
     return HELP_OPN_NOTFOUND;
 }
-
-void respuestasBroadcast(mqd_t self, void** arregloRespuestas)
-{
-    for(int i = 0; i < N_WORKERS - 1; i++)
-    {
-        Msg helpReceive;
-        if(msgReceive(self, &helpReceive) <= 0)
-            fprintf(stderr, "flashié worker receive\n");
-        if(helpReceive.tipo == T_DEVUELVO_AYUDA)
-        {
-            *arregloRespuestas = helpReceive.datos;
-            arregloRespuestas++;
-            msgDestroy(&helpReceive);
-        }
-        else
-        {
-            //TODO: guardar en un buffer y reenviar todos juntos
-            if(msgSend(self, helpReceive) < 0)
-                fprintf(stderr, "flashié devolviendome un mensaje (en LSD)\n");
-        }
-    }
-    return;
-}
-

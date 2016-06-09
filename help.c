@@ -40,6 +40,47 @@ void helpLSD(ParametrosWorker params, WorkerData *data, Msg *msg)
     data->maxIDlocal = maxIDlocal;
 }
 
+void helpDEL(ParametrosWorker params, WorkerData *data, Msg *msg)
+{
+    //data necesaria del mensaje
+    mqd_t cumpa = msg->remitente;
+    Request rqst = *(Request*)(msg->datos);
+    msgDestroy(msg);
+    
+    //data necesaria del worker
+    int id = params.id;
+    mqd_t self = params.casilla;
+    Abierto* abiertos = data->abiertos;
+    int nAbiertos = data->nAbiertos;
+    
+    SList* sesiones = data->sesiones;
+    int maxIDlocal = data->maxIDlocal;
+
+    int res;
+    if(esMio(id, rqst.nombre_archivo))
+    {
+        if(estaAbierto(rqst.nombre_archivo, abiertos, nAbiertos))
+        {
+            res = HELP_DEL_INUSE;
+        }
+        else
+        {
+            char cmd[MAX_NOMBRE + 15];
+            sprintf(cmd, "rm data/worker%d/%s", id, rqst.nombre_archivo);
+            system(cmd);
+            res = HELP_DEL_OK;
+        }
+    }
+    else
+    {
+        res = HELP_DEL_NOTFOUND;
+    }
+    
+    Msg respuesta = msgCreate(cumpa, T_DEVUELVO_AYUDA, &res, sizeof(int));
+    if(msgSend(cumpa, respuesta) < 0)
+        fprintf(stderr, "flashié send ayuda OPN\n");
+}
+
 void helpOPN(ParametrosWorker params, WorkerData *data, Msg *msg)
 {
     //data necesaria del mensaje
@@ -58,10 +99,8 @@ void helpOPN(ParametrosWorker params, WorkerData *data, Msg *msg)
     SList* sesiones = data->sesiones;
     int maxIDlocal = data->maxIDlocal;
 
-    char nombres[MAX_ARCHIVOS * MAX_NOMBRE];
-    getLocalFiles(id, workers, nombres);
     int FD;
-    if(strstr(nombres, rqst.nombre_archivo) != NULL )
+    if(esMio(id, rqst.nombre_archivo))
     {
         //es mio
         if(estaAbierto(rqst.nombre_archivo, abiertos, nAbiertos))
@@ -79,7 +118,7 @@ void helpOPN(ParametrosWorker params, WorkerData *data, Msg *msg)
             Abierto new = createAbierto(FD, rqst.nombre_archivo, self);
             
             //lo agrego a mi lista
-            agregarAbiertoEnData(data, new);
+        agregarAbiertoEnData(data, new);
         }
     }
     else
@@ -119,11 +158,6 @@ void helpCLO(ParametrosWorker params, WorkerData *data, Msg *msg)
     data->sesiones = sesiones;
     data->maxIDlocal = maxIDlocal;
     */
-    printf("Llamada a ayuda no implementada");
-}
-
-void helpDEL(ParametrosWorker params, WorkerData *data, Msg *msg)
-{
     printf("Llamada a ayuda no implementada");
 }
 

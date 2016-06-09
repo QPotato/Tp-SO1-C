@@ -7,6 +7,10 @@
 #define HELP_OPN_NOTFOUND -1
 #define HELP_OPN_INUSE -2
 
+#define HELP_DEL_OK 0
+#define HELP_DEL_NOTFOUND -1
+#define HELP_DEL_INUSE -2
+
 #include "estructuras.h"
 #include "SList.h"
 #include "mensajes.h"
@@ -51,19 +55,6 @@ void helpWRT(ParametrosWorker params, WorkerData *data, Msg *msg);
 void helpREA(ParametrosWorker params, WorkerData *data, Msg *msg);
 
 void helpCLO(ParametrosWorker params, WorkerData *data, Msg *msg);
-
-#define PROLOGO \
-    mqd_t cumpa = msg->remitente; \
-    Request rqst = *(Request*)(msg->datos); \
-    msgDestroy(msg); \
-    \
-    int id = params.id; \
-    mqd_t self = params.casilla; \
-    mqd_t *workers = params.casillasWorkers; \
-    \
-    SList* sesiones = data->sesiones; \
-    int maxIDlocal = data->maxIDlocal; \
-    
 
 
 

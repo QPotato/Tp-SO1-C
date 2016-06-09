@@ -7,8 +7,14 @@ void getLocalFiles(int id, mqd_t *workers, char *nombres);
 //devuelve en char *nombres un string con todos los archivos separados por ' '
 void getFiles(int id, mqd_t *workers, char *nombres);
 
+//Devuelve 1 si el archivo existe, no importa quien lo tenga. Sino, 0.
+int existeArchivo(int id, mqd_t *workers, char *nombre);
+
 //Devuelve el indice de la sesion en la lista de sesiones o -1 si no esta.
 int buscarSesion(mqd_t cumpa, SList* sesiones);
+
+//Asumiendo que el archivo existe, retorna 1 si es local, 0 si lo tiene otro.
+int esMio(int id, char *nombre);
 
 //Devuelve 1 si hay un abierto de nombre nombreAr en abiertos.
 int estaAbierto(const char* nombreAr, Abierto* abiertos, int nAbiertos);
@@ -18,3 +24,6 @@ void enviarRespuesta(mqd_t remitente,mqd_t procSocket, char* resStr);
 
 //Labura con las respuestas del broadcast que manda OPN
 int handleOPNBroadcast(ParametrosWorker params, WorkerData *data, int* FDs, int sesionID);
+
+//Labura con las respuestas del broadcast que manda OPN
+int handleDELBroadcast(int* respuestas);
