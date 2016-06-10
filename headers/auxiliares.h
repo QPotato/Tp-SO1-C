@@ -16,14 +16,14 @@ int buscarSesion(mqd_t cumpa, SList* sesiones);
 //Asumiendo que el archivo existe, retorna 1 si es local, 0 si lo tiene otro.
 int esMio(int id, char *nombre);
 
-//Devuelve 1 si hay un abierto de nombre nombreAr en abiertos.
-int estaAbierto(const char* nombreAr, Abierto* abiertos, int nAbiertos);
-
 //"Macro" para enviarle al proc_socket la respuesta a la request del usuario.
 void enviarRespuesta(mqd_t remitente,mqd_t procSocket, char* resStr);
 
 //Labura con las respuestas del broadcast que manda OPN
 int handleOPNBroadcast(ParametrosWorker params, WorkerData *data, int* FDs, int sesionID);
 
-//Labura con las respuestas del broadcast que manda OPN
+//Labura con las respuestas del broadcast que manda DEL
 int handleDELBroadcast(int* respuestas);
+
+//Labura con las respuestas del broadcast que manda CLO
+int handleCLOBroadcast(int* respuestas);

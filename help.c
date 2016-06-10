@@ -59,7 +59,7 @@ void helpDEL(ParametrosWorker params, WorkerData *data, Msg *msg)
     int res;
     if(esMio(id, rqst.nombre_archivo))
     {
-        if(estaAbierto(rqst.nombre_archivo, abiertos, nAbiertos))
+        if(estaAbierto(data, rqst.nombre_archivo))
         {
             res = HELP_DEL_INUSE;
         }
@@ -76,7 +76,7 @@ void helpDEL(ParametrosWorker params, WorkerData *data, Msg *msg)
         res = HELP_DEL_NOTFOUND;
     }
     
-    Msg respuesta = msgCreate(cumpa, T_DEVUELVO_AYUDA, &res, sizeof(int));
+    Msg respuesta = msgCreate(self, T_DEVUELVO_AYUDA, &res, sizeof(int));
     if(msgSend(cumpa, respuesta) < 0)
         fprintf(stderr, "flashié send ayuda OPN\n");
 }
@@ -91,8 +91,6 @@ void helpOPN(ParametrosWorker params, WorkerData *data, Msg *msg)
     //data necesaria del worker
     int id = params.id;
     mqd_t self = params.casilla;
-    mqd_t *workers;
-    workers = params.casillasWorkers;
     Abierto* abiertos = data->abiertos;
     int nAbiertos = data->nAbiertos;
     
@@ -103,7 +101,7 @@ void helpOPN(ParametrosWorker params, WorkerData *data, Msg *msg)
     if(esMio(id, rqst.nombre_archivo))
     {
         //es mio
-        if(estaAbierto(rqst.nombre_archivo, abiertos, nAbiertos))
+        if(estaAbierto(data, rqst.nombre_archivo))
         {
             FD = HELP_OPN_INUSE; //lo tengo pero ya esta abierto
         }
@@ -126,7 +124,7 @@ void helpOPN(ParametrosWorker params, WorkerData *data, Msg *msg)
         FD = HELP_OPN_NOTFOUND; //no lo tengo
     }
     
-    Msg respuesta = msgCreate(cumpa, T_DEVUELVO_AYUDA, &FD, sizeof(int));
+    Msg respuesta = msgCreate(self, T_DEVUELVO_AYUDA, &FD, sizeof(int));
     if(msgSend(cumpa, respuesta) < 0)
         fprintf(stderr, "flashié send ayuda OPN\n");
         
@@ -137,28 +135,26 @@ void helpOPN(ParametrosWorker params, WorkerData *data, Msg *msg)
 
 void helpCLO(ParametrosWorker params, WorkerData *data, Msg *msg)
 {
-    /*
     //data necesaria del mensaje
     mqd_t cumpa = msg->remitente;
     Request rqst = *(Request*)(msg->datos);
     msgDestroy(msg);
     
-    //data necesaria del worker
-    int id = params.id;
-    mqd_t self = params.casilla;
-    mqd_t *workers;
-    workers = params.casillasWorkers;
-    Abierto* abiertos = data->abiertos;
-    int nAbiertos = data->nAbiertos;
-    
-    SList* sesiones = data->sesiones;
-    int maxIDlocal = data->maxIDlocal;
-        
-    //epilogo
-    data->sesiones = sesiones;
-    data->maxIDlocal = maxIDlocal;
-    */
-    printf("Llamada a ayuda no implementada");
+    //handle...
+    int res;
+    // Reviso si es local
+    if(esLocalFD(data, rqst.FD))
+    {
+        cerrarEnData(data, rqst.FD);
+        res = HELP_CLO_OK;
+    }
+    else
+    {
+        res = HELP_CLO_NOTFOUND;
+    }
+    Msg respuesta = msgCreate(cumpa, T_DEVUELVO_AYUDA, &res, sizeof(int));
+    if(msgSend(cumpa, respuesta) < 0)
+        fprintf(stderr, "flashié send ayuda OPN\n");
 }
 
 void helpREA(ParametrosWorker params, WorkerData *data, Msg *msg)

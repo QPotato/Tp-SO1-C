@@ -47,6 +47,8 @@ typedef struct
 } Sesion;
 
 void agregarAbiertoEnSesion(Sesion* sesion, int nuevo);
+int sesionTieneFD(Sesion* sesion, int FD);
+void cerrarEnSesion(Sesion* sesion, int FD);
 
 typedef struct
 {
@@ -57,4 +59,8 @@ typedef struct
 } WorkerData;
 
 void agregarAbiertoEnData(WorkerData* data, Abierto nuevo);
+int estaAbierto(WorkerData* data, const char* nombreAr);
+int esLocalFD(WorkerData* data, int FD);
+void cerrarEnData(WorkerData* data, int FD);
+
 #endif //__ESTRUCTURAS_H__

@@ -31,19 +31,16 @@ void handleCON(ParametrosWorker params, WorkerData *data, Msg *msg)
 
     //Todo ok, lo conecto y devuelvo la ID.
     int userID = maxIDlocal * N_WORKERS + id;
-    maxIDlocal++;
+    data->maxIDlocal++;
+    
     Sesion* sn = malloc(sizeof(Sesion));
     sn->casilla = cumpa;
     sn->nAbiertos = 0;
-    sesiones = slist_append(sesiones, (void*) sn);
+    data->sesiones = slist_append(sesiones, (void*) sn);
     
     char res[128];
     sprintf(res, "OK ID %d\n", userID);
     enviarRespuesta(self, cumpa, res);
-    
-    //epilogo
-    data->sesiones = sesiones;
-    data->maxIDlocal = maxIDlocal;
     return;
 }
 
@@ -114,7 +111,7 @@ void handleCRE(ParametrosWorker params, WorkerData *data, Msg *msg)
     // Reviso que no exista ya ese archivo
     if(existeArchivo(id, workers, rqst.nombre_archivo))
     {
-        enviarRespuesta(self, cumpa, "ERROR el archivo ya existe\n");
+        enviarRespuesta(self, cumpa, "Error: el archivo ya existe\n");
         return;
     }
     
@@ -158,17 +155,22 @@ void handleDEL(ParametrosWorker params, WorkerData *data, Msg *msg)
     // Reviso que exista ese archivo
     if(!existeArchivo(id, workers, rqst.nombre_archivo))
     {
-        enviarRespuesta(self, cumpa, "ERROR archivo inexistente\n");
+        enviarRespuesta(self, cumpa, "Error: archivo inexistente\n");
         return;
     }
-    
     // Todo ok, lo tengo que borrar.
     if(esMio(id, rqst.nombre_archivo))
     {
+        if(estaAbierto(data, rqst.nombre_archivo))
+        {
+            enviarRespuesta(self, cumpa,"Error: Archivo abierto\n");
+            return;
+        }
         char cmd[MAX_NOMBRE + 15];
         sprintf(cmd, "rm data/worker%d/%s", id, rqst.nombre_archivo);
         system(cmd);
         enviarRespuesta(self, cumpa,"OK\n");
+        return;
     }
     else
     {
@@ -186,9 +188,10 @@ void handleDEL(ParametrosWorker params, WorkerData *data, Msg *msg)
                 break;
             case HELP_DEL_NOTFOUND:
                 enviarRespuesta(self, cumpa,"Error: Se pudrio todo\n");
-                printf("Flashie en CLO\n");
+                printf("Flashiamos en CLO\n");
                 break;
         }
+        return;
     }
 }
 
@@ -221,11 +224,17 @@ void handleOPN(ParametrosWorker params, WorkerData *data, Msg *msg)
         return;
     }
     
+    // Reviso que exista ese archivo
+    if(!existeArchivo(id, workers, rqst.nombre_archivo))
+    {
+        enviarRespuesta(self, cumpa, "Error: archivo inexistente\n");
+        return;
+    }
     // Lo tengo yo?
     if(esMio(id, rqst.nombre_archivo))
     {
         // Reviso que no este ya abierto.
-        if(estaAbierto(rqst.nombre_archivo, abiertos, nAbiertos))
+        if(estaAbierto(data, rqst.nombre_archivo))
         {
             enviarRespuesta(self, cumpa, "Error: archivo ya abierto\n");
             return;
@@ -264,7 +273,8 @@ void handleOPN(ParametrosWorker params, WorkerData *data, Msg *msg)
         switch(FD)
         {
             case HELP_OPN_NOTFOUND:
-                enviarRespuesta(self, cumpa,"Error: archivo no encontrado\n");
+                enviarRespuesta(self, cumpa,"Error: Se pudrio todo\n");
+                printf("Flashiamos en OPN\n");
                 break;
                 
             case HELP_OPN_INUSE:
@@ -275,6 +285,69 @@ void handleOPN(ParametrosWorker params, WorkerData *data, Msg *msg)
                 sprintf(respuesta, "OK FD %d\n", FD);
                 enviarRespuesta(self, cumpa, respuesta);
         }
+    }
+}
+
+/*
+    handle CLO
+    No implementado
+*/
+void handleCLO(ParametrosWorker params, WorkerData *data, Msg *msg)
+{
+    //data necesaria del mensaje
+    mqd_t cumpa = msg->remitente;
+    Request rqst = *(Request*)(msg->datos);
+    msgDestroy(msg);
+    
+    //data necesaria del worker
+    int id = params.id;
+    mqd_t self = params.casilla;
+    mqd_t *workers = params.casillasWorkers;
+    
+    SList* sesiones = data->sesiones;
+
+    //handle...
+    
+    // Reviso que este conectado y de paso averiguo su ID.
+    int sesionID;
+    if((sesionID = buscarSesion(cumpa, sesiones)) < 0)
+    {
+        enviarRespuesta(self, cumpa, "Error: no conectado.\n");
+        return;
+    }
+    Sesion *ses = (Sesion *)slist_nth(sesiones, sesionID);
+    
+    // Reviso que la sesion tenga un abierto con ese FD
+    if(!sesionTieneFD(ses, rqst.FD))
+    {
+        enviarRespuesta(self, cumpa, "Error: FD no corresponde a un archivo abierto.\n");
+        return;
+    }
+    cerrarEnSesion(ses, rqst.FD);
+    
+    // Me fijo si el archivo es local
+    if(esLocalFD(data, rqst.FD))
+    {
+        cerrarEnData(data, rqst.FD);
+        enviarRespuesta(self, cumpa, "OK\n");
+    }
+    else
+    {
+        int respuestas[N_WORKERS - 1];
+        Msg helpMsg = msgCreate(self, T_AYUDA, &rqst, sizeof(rqst));
+        msgBroadcastPiola(workers, helpMsg, sizeof(rqst), respuestas, sizeof(int));
+        int res = handleCLOBroadcast(respuestas);
+        switch(res)
+        {
+            case HELP_CLO_OK:
+                enviarRespuesta(self, cumpa,"OK\n");
+                break;
+            case HELP_DEL_NOTFOUND:
+                enviarRespuesta(self, cumpa,"Error: Se pudrio todo\n");
+                printf("Flashiamos en DEL\n");
+                break;
+        }
+        
     }
 }
 
@@ -324,30 +397,10 @@ void handleWRT(ParametrosWorker params, WorkerData *data, Msg *msg)
     //handle...
     printf("No implementado\n");
     enviarRespuesta(self, cumpa, "Error: no implementado.\n");
-}
-
-/*
-    handle CLO
-    No implementado
-*/
-void handleCLO(ParametrosWorker params, WorkerData *data, Msg *msg)
-{
-    //data necesaria del mensaje
-    mqd_t cumpa = msg->remitente;
-    //Request rqst = *(Request*)(msg->datos);
-    msgDestroy(msg);
     
-    //data necesaria del worker
-    //int id = params.id;
-    mqd_t self = params.casilla;
-    //mqd_t *workers;
-    //workers = params.casillasWorkers;
-    
-    SList* sesiones = data->sesiones;
-
-    //handle...
-    printf("No implementado\n");
-    enviarRespuesta(self, cumpa, "Error: no implementado.\n");
+    /*
+        Esto va a tener que liberar el buffer del request.
+    */
 }
 
 /*

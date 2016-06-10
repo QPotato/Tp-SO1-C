@@ -75,6 +75,12 @@ int existeArchivo(int id, mqd_t *workers, char *nombre)
         return 1;
 }
 
+//Devuelve el indice de la sesion en la lista de sesiones o -1 si no esta.
+int buscarSesion(mqd_t cumpa, SList* sesiones)
+{
+    return slist_index(sesiones, (void*)&cumpa, mqd_t_comp);
+}
+
 //Asumiendo que el archivo existe, retorna 1 si es local, 0 si lo tiene otro.
 int esMio(int id, char *nombre)
 {
@@ -85,21 +91,6 @@ int esMio(int id, char *nombre)
         return 1;
     else
         return 0;
-}
-
-//Devuelve el indice de la sesion en la lista de sesiones o -1 si no esta.
-int buscarSesion(mqd_t cumpa, SList* sesiones)
-{
-    return slist_index(sesiones, (void*)&cumpa, mqd_t_comp);
-}
-
-//Devuelve 1 si hay un abierto de nombre nombreAr en abiertos.
-int estaAbierto(const char* nombreAr, Abierto* abiertos, int nAbiertos)
-{
-    for(int i = 0; i < nAbiertos; i++)
-        if(strcmp(nombreAr, abiertos[i].nombre) == 0)
-            return 1;
-    return 0;
 }
 
 //"Macro" para enviarle al proc_socket la respuesta a la request del usuario.
@@ -144,4 +135,16 @@ int handleOPNBroadcast(ParametrosWorker params, WorkerData *data, int* FDs, int 
         }
     }
     return HELP_OPN_NOTFOUND;
+}
+
+int handleCLOBroadcast(int* respuestas)
+{
+    for(int i = 0; i < N_WORKERS - 1; i++)
+    {
+        if(respuestas[i] == HELP_CLO_OK)
+        {
+            return HELP_DEL_OK;
+        }
+    }
+    return HELP_DEL_NOTFOUND;
 }

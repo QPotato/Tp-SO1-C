@@ -11,6 +11,9 @@
 #define HELP_DEL_NOTFOUND -1
 #define HELP_DEL_INUSE -2
 
+#define HELP_CLO_OK 0
+#define HELP_CLO_NOTFOUND -1
+
 #include "estructuras.h"
 #include "SList.h"
 #include "mensajes.h"
