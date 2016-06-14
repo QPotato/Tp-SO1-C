@@ -20,8 +20,4 @@ jueves 28:
     
     
 Bugs:
-- OPN solo es una request valida
-- CRE solo tambien
-- DEL solo tambien
-- CLO FD tambien
 - segmentation fault raro con muchos OPN

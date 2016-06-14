@@ -42,7 +42,7 @@ int isNumber(char *cadena) {
 }
 
 //devuelve el Comand al que refiere la primer palabra del mensaje (-1 si no es un comando válido)
-Comand getComand(char *cadena) {
+Comand getComand(const char *cadena) {
     if(strcmp(cadena, "CON") == 0)
         return CON;
     if(strcmp(cadena, "LSD") == 0)
@@ -83,7 +83,7 @@ Request parse(char *cadena) {
     int i;
     for(i = 0; i < size; i++)
     {
-        if(cadena[i] < ' ' || cadena[i] > '~')
+        if(cadena[i] < ' ' || cadena[i] >= '~')
         {
             cadena[i] = '\0';
             size = i;
@@ -142,7 +142,8 @@ Request parse(char *cadena) {
         break;
         
         case DEL:
-        if( strcmp(args[1], "") != 0 ||
+        if( strcmp(args[0], "") == 0 ||
+            strcmp(args[1], "") != 0 ||
             strcmp(args[2], "") != 0 ||
             strcmp(args[3], "") != 0 ||
             strcmp(args[4], "") != 0 ) {
@@ -152,7 +153,8 @@ Request parse(char *cadena) {
         break;
         
         case CRE:
-        if( strcmp(args[1], "") != 0 ||
+        if( strcmp(args[0], "") == 0 ||
+            strcmp(args[1], "") != 0 ||
             strcmp(args[2], "") != 0 ||
             strcmp(args[3], "") != 0 ||
             strcmp(args[4], "") != 0 ) {
@@ -162,7 +164,8 @@ Request parse(char *cadena) {
         break;
         
         case OPN:
-        if( strcmp(args[1], "") != 0 ||
+        if( strcmp(args[0], "") == 0 ||
+            strcmp(args[1], "") != 0 ||
             strcmp(args[2], "") != 0 ||
             strcmp(args[3], "") != 0 ||
             strcmp(args[4], "") != 0 ) {
@@ -173,7 +176,9 @@ Request parse(char *cadena) {
         
         case WRT:
         if( strcmp(args[0], "FD") != 0   ||
+            strcmp(args[1], "") == 0 ||
             strcmp(args[2], "SIZE") != 0 ||
+            strcmp(args[3], "") == 0 ||
 			isNumber(args[1]) == 0       ||
 			isNumber(args[3]) == 0       ) {
             rq.con = ERR;
@@ -186,7 +191,9 @@ Request parse(char *cadena) {
         
         case REA:
         if( strcmp(args[0], "FD") != 0   ||
+            strcmp(args[1], "") == 0 ||
             strcmp(args[2], "SIZE") != 0 ||
+            strcmp(args[3], "") == 0 ||
             strcmp(args[4], "") != 0     ||
 			isNumber(args[1]) == 0       ||
 			isNumber(args[3]) == 0       ) {
@@ -198,6 +205,7 @@ Request parse(char *cadena) {
         
         case CLO:
         if( strcmp(args[0], "FD") != 0 ||
+            strcmp(args[1], "") == 0 ||
             strcmp(args[2], "") != 0   ||
             strcmp(args[3], "") != 0   ||
             strcmp(args[4], "") != 0   ||
