@@ -143,8 +143,45 @@ int handleCLOBroadcast(int* respuestas)
     {
         if(respuestas[i] == HELP_CLO_OK)
         {
-            return HELP_DEL_OK;
+            return HELP_CLO_OK;
         }
     }
-    return HELP_DEL_NOTFOUND;
+    return HELP_CLO_NOTFOUND;
+}
+
+int handleWRTBroadcast(int* respuestas)
+{
+    for(int i = 0; i < N_WORKERS - 1; i++)
+    {
+        if(respuestas[i] == HELP_WRT_OK)
+        {
+            return HELP_WRT_OK;
+        }
+        if(respuestas[i] == HELP_WRT_ERROR)
+        {
+            return HELP_WRT_ERROR;
+        }
+    }
+    return HELP_WRT_NOTFOUND;
+}
+
+/*
+    Maneja las respuestas al broadcast que hace el handler de REA cuando el FD es valido pero no local.
+    Todos los workers contestan:
+        - Si no es de el o es de el y tiene un error leyendo, contesta NULL.
+        - Si es de el, reserva un buffer con malloc y devuelve el puntero al buffer con lo leido.
+*/
+int handleREABroadcast(char** respuestas, char* buffer)
+{
+    /*
+    for(int i = 0; i < N_WORKERS - 1; i++)
+    {
+        if(respuestas[i] != NULL)
+        {
+            strcpy(buffer, respuestas[i]);
+            return HELP_REA_OK;
+        }
+    }
+    return HELP_REA_ERROR;
+    */
 }

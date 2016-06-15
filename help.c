@@ -1,6 +1,7 @@
 #include <dirent.h>
 #include "headers/worker.h"
 #include "headers/auxiliares.h"
+#include <unistd.h>
 
 void helpLSD(ParametrosWorker params, WorkerData *data, Msg *msg)
 {
@@ -126,7 +127,7 @@ void helpOPN(ParametrosWorker params, WorkerData *data, Msg *msg)
     
     Msg respuesta = msgCreate(self, T_DEVUELVO_AYUDA, &FD, sizeof(int));
     if(msgSend(cumpa, respuesta) < 0)
-        fprintf(stderr, "flashié send ayuda OPN\n");
+        fprintf(stderr, "flashié send ayuda DEL\n");
         
     //epilogo
     data->sesiones = sesiones;
@@ -154,17 +155,66 @@ void helpCLO(ParametrosWorker params, WorkerData *data, Msg *msg)
     }
     Msg respuesta = msgCreate(cumpa, T_DEVUELVO_AYUDA, &res, sizeof(int));
     if(msgSend(cumpa, respuesta) < 0)
-        fprintf(stderr, "flashié send ayuda OPN\n");
+        fprintf(stderr, "flashié send ayuda CLO\n");
 }
-
-void helpREA(ParametrosWorker params, WorkerData *data, Msg *msg)
-{
-    printf("Llamada a ayuda no implementada");
-}
-
 
 void helpWRT(ParametrosWorker params, WorkerData *data, Msg *msg)
 {
-    printf("Llamada a ayuda no implementada");
+    //data necesaria del mensaje
+    mqd_t cumpa = msg->remitente;
+    Request rqst = *(Request*)(msg->datos);
+    msgDestroy(msg);
+    
+    int res;
+    // Reviso si es local
+    if(esLocalFD(data, rqst.FD))
+    {
+        if(write(rqst.FD, rqst.buffer, rqst.cuanto_escribir))
+            res = HELP_WRT_OK;
+        else
+            res = HELP_WRT_ERROR;
+    }
+    else
+    {
+        res = HELP_WRT_NOTFOUND;
+    }
+    Msg respuesta = msgCreate(cumpa, T_DEVUELVO_AYUDA, &res, sizeof(int));
+    if(msgSend(cumpa, respuesta) < 0)
+        fprintf(stderr, "flashié send ayuda WRT\n");
 }
+
+void helpREA(ParametrosWorker params, WorkerData *data, Msg *msg)
+{/*
+    //data necesaria del mensaje
+    mqd_t cumpa = msg->remitente;
+    Request rqst = *(Request*)(msg->datos);
+    msgDestroy(msg);
+    
+    char* res;
+    // Reviso si es local
+    if(esLocalFD(data, rqst.FD))
+    {
+        char* buffer = malloc((rqst.cuanto_leer + 1) * sizeof(char));
+        int rdSize;
+        if((rdSize = read(rqst.FD, buffer, rqst.cuanto_leer)) >= 0)
+        {
+            buffer[rdSize] = '\0';
+            res = buffer;
+        }
+        else
+            res = NULL
+        Msg respuesta = msgCreate(cumpa, T_DEVUELVO_AYUDA, res, strlen(res) + 1);
+        if(msgSend(cumpa, respuesta) < 0)
+            fprintf(stderr, "flashié send ayuda REA\n");
+        free(buffer);
+    }
+    else
+    {
+        res = NULL;
+        Msg respuesta = msgCreate(cumpa, T_DEVUELVO_AYUDA, &res, sizeof(char*));
+        if(msgSend(cumpa, respuesta) < 0)
+            fprintf(stderr, "flashié send ayuda REA\n");
+    }*/
+}
+
 

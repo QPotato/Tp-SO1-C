@@ -27,3 +27,9 @@ int handleDELBroadcast(int* respuestas);
 
 //Labura con las respuestas del broadcast que manda CLO
 int handleCLOBroadcast(int* respuestas);
+
+//Labura con las respuestas del broadcast que manda WRT
+int handleWRTBroadcast(int* respuestas);
+
+//Labura con las respuestas del broadcast que manda REA
+int handleREABroadcast(char** respuestas, char* buffer);

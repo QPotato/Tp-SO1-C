@@ -21,3 +21,9 @@ jueves 28:
     
 Bugs:
 - segmentation fault raro con muchos OPN
+
+TODO:
+- buffer de mensajes que no eran respuesta
+- getFiles con BroadcastPiola o al menos con sus correcciones
+- helpOPN esta guardando el Abierto en el que ayuda. Eso va a hacer imposible pedir cierres masivos en BYE
+- buffers tamaño fijo 4k para no compartir memoria

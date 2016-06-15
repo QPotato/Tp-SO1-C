@@ -1,6 +1,7 @@
 #include <dirent.h>
 #include "headers/worker.h"
 #include "headers/auxiliares.h"
+#include <unistd.h>
 
 /*
     handle CON
@@ -290,7 +291,6 @@ void handleOPN(ParametrosWorker params, WorkerData *data, Msg *msg)
 
 /*
     handle CLO
-    No implementado
 */
 void handleCLO(ParametrosWorker params, WorkerData *data, Msg *msg)
 {
@@ -344,11 +344,74 @@ void handleCLO(ParametrosWorker params, WorkerData *data, Msg *msg)
                 break;
             case HELP_DEL_NOTFOUND:
                 enviarRespuesta(self, cumpa,"Error: Se pudrio todo\n");
-                printf("Flashiamos en DEL\n");
+                printf("Flashiamos en CLO\n");
                 break;
         }
-        
     }
+}
+
+/*
+    handle WRT
+*/
+void handleWRT(ParametrosWorker params, WorkerData *data, Msg *msg)
+{
+    //data necesaria del mensaje
+    mqd_t cumpa = msg->remitente;
+    Request rqst = *(Request*)(msg->datos);
+    msgDestroy(msg);
+    
+    //data necesaria del worker
+    //int id = params.id;
+    mqd_t self = params.casilla;
+    mqd_t *workers = params.casillasWorkers;
+    
+    SList* sesiones = data->sesiones;
+
+    //handle...
+    // Reviso que este conectado y de paso averiguo su ID.
+    int sesionID;
+    if((sesionID = buscarSesion(cumpa, sesiones)) < 0)
+    {
+        enviarRespuesta(self, cumpa, "Error: no conectado.\n");
+        free(rqst.buffer);
+        return;
+    }
+    Sesion *ses = (Sesion *)slist_nth(sesiones, sesionID);
+    
+    // Reviso que la sesion tenga un abierto con ese FD
+    if(!sesionTieneFD(ses, rqst.FD))
+    {
+        enviarRespuesta(self, cumpa, "Error: FD no corresponde a un archivo abierto.\n");
+        free(rqst.buffer);
+        return;
+    }
+    
+    // Me fijo si el archivo es local
+    if(esLocalFD(data, rqst.FD))
+    {
+        if(write(rqst.FD, rqst.buffer, rqst.cuanto_escribir))
+            enviarRespuesta(self, cumpa, "OK\n");
+        else
+            enviarRespuesta(self, cumpa, "Error de escritura\n");
+    }
+    else
+    {
+        int respuestas[N_WORKERS - 1];
+        Msg helpMsg = msgCreate(self, T_AYUDA, &rqst, sizeof(rqst));
+        msgBroadcastPiola(workers, helpMsg, sizeof(rqst), respuestas, sizeof(int));
+        int res = handleWRTBroadcast(respuestas);
+        switch(res)
+        {
+            case HELP_WRT_OK:
+                enviarRespuesta(self, cumpa,"OK\n");
+                break;
+            case HELP_WRT_ERROR:
+                enviarRespuesta(self, cumpa, "Error de escritura\n");
+                printf("Flashiamos en WRT\n");
+                break;
+        }
+    }
+    free(rqst.buffer);
 }
 
 /*
@@ -357,49 +420,79 @@ void handleCLO(ParametrosWorker params, WorkerData *data, Msg *msg)
 */
 void handleREA(ParametrosWorker params, WorkerData *data, Msg *msg)
 {
-    //data necesaria del mensaje
-    mqd_t cumpa = msg->remitente;
-    //Request rqst = *(Request*)(msg->datos);
-    msgDestroy(msg);
-    
-    //data necesaria del worker
-    //int id = params.id;
-    mqd_t self = params.casilla;
-    //mqd_t *workers;
-    //workers = params.casillasWorkers;
-    
-    SList* sesiones = data->sesiones;
-
-    //handle...
-    printf("No implementado\n");
-    enviarRespuesta(self, cumpa, "Error: no implementado.\n");
-}
-
-/*
-    handle WRT
-    No implementado
-*/
-void handleWRT(ParametrosWorker params, WorkerData *data, Msg *msg)
-{
-    //data necesaria del mensaje
-    mqd_t cumpa = msg->remitente;
-    //Request rqst = *(Request*)(msg->datos);
-    msgDestroy(msg);
-    
-    //data necesaria del worker
-    //int id = params.id;
-    mqd_t self = params.casilla;
-    //mqd_t *workers;
-    //workers = params.casillasWorkers;
-    
-    SList* sesiones = data->sesiones;
-
-    //handle...
-    printf("No implementado\n");
-    enviarRespuesta(self, cumpa, "Error: no implementado.\n");
-    
     /*
-        Esto va a tener que liberar el buffer del request.
+    //data necesaria del mensaje
+    mqd_t cumpa = msg->remitente;
+    Request rqst = *(Request*)(msg->datos);
+    msgDestroy(msg);
+    
+    //data necesaria del worker
+    //int id = params.id;
+    mqd_t self = params.casilla;
+    mqd_t *workers = params.casillasWorkers;
+    
+    SList* sesiones = data->sesiones;
+
+    //handle...
+    // Reviso que este conectado y de paso averiguo su ID.
+    int sesionID;
+    if((sesionID = buscarSesion(cumpa, sesiones)) < 0)
+    {
+        enviarRespuesta(self, cumpa, "Error: no conectado.\n");
+        free(rqst.buffer);
+        return;
+    }
+    Sesion *ses = (Sesion *)slist_nth(sesiones, sesionID);
+    
+    // Reviso que la sesion tenga un abierto con ese FD
+    if(!sesionTieneFD(ses, rqst.FD))
+    {
+        enviarRespuesta(self, cumpa, "Error: FD no corresponde a un archivo abierto.\n");
+        free(rqst.buffer);
+        return;
+    }
+    
+    // Me fijo si el archivo es local
+    if(esLocalFD(data, rqst.FD))
+    {
+        char* buffer = malloc((rqst.cuanto_leer + 1) * sizeof(char));
+        int rdSize;
+        if((rdSize = read(rqst.FD, buffer, rqst.cuanto_leer)) >= 0)
+        {
+            buffer[rdSize] = '\0';
+            char res = malloc((rdSize + 20) * sizeof(char));
+            sprintf(res, "OK FD %s\n", buffer);
+            enviarRespuesta(self, cumpa, res);
+            free(res);
+        }
+        else
+            enviarRespuesta(self, cumpa, "Error de lectura\n");
+        free(buffer);
+    }
+    else
+    {
+        char* respuestas[N_WORKERS - 1];
+        char* buffer = malloc((rqst.cuanto_leer + 1) * sizeof(char));
+        int rdSize;
+        Msg helpMsg = msgCreate(self, T_AYUDA, &rqst, sizeof(rqst));
+        msgBroadcastPiola(workers, helpMsg, sizeof(rqst), respuestas, sizeof(char*));
+        int resultado = handleREABroadcast(respuestas, buffer);
+        switch(resltado)
+        {
+            case HELP_REA_OK:
+                buffer[rdSize] = '\0';
+                char res = malloc((strlen(buffer) + 20) * sizeof(char));
+                sprintf(res, "OK FD %s\n", buffer);
+                enviarRespuesta(self, cumpa, res);
+                free(res);
+                break;
+            case HELP_REA_ERROR:
+                enviarRespuesta(self, cumpa, "Error de lectura\n");
+                printf("Flashiamos en REA\n");
+                break;
+        }
+        free(buffer);
+    }
     */
 }
 

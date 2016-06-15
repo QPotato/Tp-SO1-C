@@ -14,6 +14,13 @@
 #define HELP_CLO_OK 0
 #define HELP_CLO_NOTFOUND -1
 
+#define HELP_WRT_OK 0
+#define HELP_WRT_NOTFOUND -1
+#define HELP_WRT_ERROR -2
+
+#define HELP_REA_OK 0
+#define HELP_REA_ERROR -1
+
 #include "estructuras.h"
 #include "SList.h"
 #include "mensajes.h"
