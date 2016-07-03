@@ -184,37 +184,29 @@ void helpWRT(ParametrosWorker params, WorkerData *data, Msg *msg)
 }
 
 void helpREA(ParametrosWorker params, WorkerData *data, Msg *msg)
-{/*
+{
     //data necesaria del mensaje
     mqd_t cumpa = msg->remitente;
     Request rqst = *(Request*)(msg->datos);
     msgDestroy(msg);
     
-    char* res;
+    Leido leido;
     // Reviso si es local
     if(esLocalFD(data, rqst.FD))
     {
-        char* buffer = malloc((rqst.cuanto_leer + 1) * sizeof(char));
-        int rdSize;
-        if((rdSize = read(rqst.FD, buffer, rqst.cuanto_leer)) >= 0)
+        if((leido.size = read(rqst.FD, leido.buffer, rqst.cuanto_leer)) <= 0)
         {
-            buffer[rdSize] = '\0';
-            res = buffer;
+            leido.size = HELP_REA_ERROR;
         }
-        else
-            res = NULL
-        Msg respuesta = msgCreate(cumpa, T_DEVUELVO_AYUDA, res, strlen(res) + 1);
-        if(msgSend(cumpa, respuesta) < 0)
-            fprintf(stderr, "flashié send ayuda REA\n");
-        free(buffer);
-    }
-    else
-    {
-        res = NULL;
-        Msg respuesta = msgCreate(cumpa, T_DEVUELVO_AYUDA, &res, sizeof(char*));
-        if(msgSend(cumpa, respuesta) < 0)
-            fprintf(stderr, "flashié send ayuda REA\n");
-    }*/
-}
+   }
+   else
+   {
+       leido.size = HELP_REA_NOTFOUND;
+   }
+
+   Msg respuesta = msgCreate(cumpa, T_DEVUELVO_AYUDA, &leido, sizeof(Leido));
+   if(msgSend(cumpa, respuesta) < 0)
+        fprintf(stderr, "flashié send ayuda REA\n");
+} 
 
 

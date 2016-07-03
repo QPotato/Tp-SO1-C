@@ -20,6 +20,7 @@
 
 #define HELP_REA_OK 0
 #define HELP_REA_ERROR -1
+#define HELP_REA_NOTFOUND -2
 
 #include "estructuras.h"
 #include "SList.h"

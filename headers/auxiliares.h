@@ -32,4 +32,4 @@ int handleCLOBroadcast(int* respuestas);
 int handleWRTBroadcast(int* respuestas);
 
 //Labura con las respuestas del broadcast que manda REA
-int handleREABroadcast(char** respuestas, char* buffer);
+int handleREABroadcast(Leido *respuestas, char* buffer, int* rdSize);

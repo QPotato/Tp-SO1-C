@@ -17,7 +17,7 @@ typedef int Comand;
 #define CLO 7
 #define BYE 8
 
-#define BUFF_SIZE 10000 //esto va en contra de eso de los tamaños arbitrarios de mensajes
+#define BUFF_SIZE 1024 //esto va en contra de eso de los tamaños arbitrarios de mensajes              // si, y no me importa
 #define MAX_NOMBRE 128
 #define MAX_ARCHIVOS 1024
 #define MAX_ABIERTOS MAX_ARCHIVOS
@@ -26,9 +26,14 @@ typedef int Comand;
 typedef struct _Request {
     Comand con;
     int FD, cuanto_leer, cuanto_escribir;
-    char *buffer; // <--------------- Esto lo tiene que liberar el qeu resuelva el WRT!!!!
+    char buffer[BUFF_SIZE];
     char nombre_archivo[MAX_NOMBRE];
 } Request;
+
+typedef struct _Leido {
+    int size;
+    char buffer[BUFF_SIZE];
+} Leido;
 
 typedef struct
 {

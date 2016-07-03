@@ -114,7 +114,6 @@ Request parse(char *cadena) {
     rq.FD = -1;
     rq.cuanto_leer = -1;
     rq.cuanto_escribir = -1;
-    rq.buffer = NULL;
     
     //chequeo que el request sea correcto y lleno los campos necesarios de la estructura
     switch(cmd) {
@@ -185,7 +184,6 @@ Request parse(char *cadena) {
         }
         rq.FD = atoi(args[1]);
         rq.cuanto_escribir = atoi(args[3]);
-        rq.buffer = malloc(strlen(args[4] + 1));
         strcpy(rq.nombre_archivo, args[0]);
         break;
         

@@ -18,7 +18,9 @@ jueves 28:
     -cada host guarda una lista de abiertos
     -si el archivo pedido lo tiene otro worker, yo lo guardo en mis abiertos pero me quedo la referencia a host.
     
-    
+3 de julio 2016:
+    El buffer de lectura/escritura en la request lo pase de tamaño arbitrario a BUFF_SIZE. Esta piola el tamaño arbitrario, pero ya de por si los mensjaes que llegan del socket
+    son de maximo BUFF_SIZE. Ademas, hace todo mas facil sin tener que compartir memoria entre procesos (antes pasabamos punteros a un proceso de un buffer en memoria de otro, puaj)
 Bugs:
 - segmentation fault raro con muchos OPN
 
@@ -27,3 +29,5 @@ TODO:
 - getFiles con BroadcastPiola o al menos con sus correcciones
 - helpOPN esta guardando el Abierto en el que ayuda. Eso va a hacer imposible pedir cierres masivos en BYE
 - buffers tamaño fijo 4k para no compartir memoria
+- Agregarle al parser el chequeo de que el SIZE no sea mayor a 1024
+- De alguna manera dejar de usar BUFF_SIZE para el tamaño del buffer de lectura/escritura y para el tamaño maximo de mensaje que se puede recibir.

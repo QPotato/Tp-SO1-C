@@ -167,21 +167,21 @@ int handleWRTBroadcast(int* respuestas)
 
 /*
     Maneja las respuestas al broadcast que hace el handler de REA cuando el FD es valido pero no local.
-    Todos los workers contestan:
-        - Si no es de el o es de el y tiene un error leyendo, contesta NULL.
-        - Si es de el, reserva un buffer con malloc y devuelve el puntero al buffer con lo leido.
+    Todos los workers contestan con un Leido.
+        - Si no tienen el archivo, size = HELP_REA_NOTFOUND
+        - Si lo tienen pero hay error de lectura, size = HELP_REA_ERROR
 */
-int handleREABroadcast(char** respuestas, char* buffer)
-{
-    /*
+int handleREABroadcast(Leido *respuestas, char* buffer, int* rdSize)
+{    
     for(int i = 0; i < N_WORKERS - 1; i++)
     {
-        if(respuestas[i] != NULL)
+        if(respuestas[i].size >= 0)
         {
-            strcpy(buffer, respuestas[i]);
+            // Este tenia el archivo y pudo leer! Nos copiamos el resultado.
+            memcpy(buffer, respuestas[i].buffer, respuestas[i].size);
+            *rdSize = respuestas[i].size;
             return HELP_REA_OK;
         }
     }
     return HELP_REA_ERROR;
-    */
 }

@@ -373,7 +373,6 @@ void handleWRT(ParametrosWorker params, WorkerData *data, Msg *msg)
     if((sesionID = buscarSesion(cumpa, sesiones)) < 0)
     {
         enviarRespuesta(self, cumpa, "Error: no conectado.\n");
-        free(rqst.buffer);
         return;
     }
     Sesion *ses = (Sesion *)slist_nth(sesiones, sesionID);
@@ -382,7 +381,6 @@ void handleWRT(ParametrosWorker params, WorkerData *data, Msg *msg)
     if(!sesionTieneFD(ses, rqst.FD))
     {
         enviarRespuesta(self, cumpa, "Error: FD no corresponde a un archivo abierto.\n");
-        free(rqst.buffer);
         return;
     }
     
@@ -411,7 +409,6 @@ void handleWRT(ParametrosWorker params, WorkerData *data, Msg *msg)
                 break;
         }
     }
-    free(rqst.buffer);
 }
 
 /*
@@ -420,7 +417,6 @@ void handleWRT(ParametrosWorker params, WorkerData *data, Msg *msg)
 */
 void handleREA(ParametrosWorker params, WorkerData *data, Msg *msg)
 {
-    /*
     //data necesaria del mensaje
     mqd_t cumpa = msg->remitente;
     Request rqst = *(Request*)(msg->datos);
@@ -439,7 +435,6 @@ void handleREA(ParametrosWorker params, WorkerData *data, Msg *msg)
     if((sesionID = buscarSesion(cumpa, sesiones)) < 0)
     {
         enviarRespuesta(self, cumpa, "Error: no conectado.\n");
-        free(rqst.buffer);
         return;
     }
     Sesion *ses = (Sesion *)slist_nth(sesiones, sesionID);
@@ -448,52 +443,44 @@ void handleREA(ParametrosWorker params, WorkerData *data, Msg *msg)
     if(!sesionTieneFD(ses, rqst.FD))
     {
         enviarRespuesta(self, cumpa, "Error: FD no corresponde a un archivo abierto.\n");
-        free(rqst.buffer);
         return;
     }
     
     // Me fijo si el archivo es local
     if(esLocalFD(data, rqst.FD))
     {
-        char* buffer = malloc((rqst.cuanto_leer + 1) * sizeof(char));
+        char buffer[BUFF_SIZE];
         int rdSize;
         if((rdSize = read(rqst.FD, buffer, rqst.cuanto_leer)) >= 0)
         {
-            buffer[rdSize] = '\0';
-            char res = malloc((rdSize + 20) * sizeof(char));
-            sprintf(res, "OK FD %s\n", buffer);
+            char* res = malloc((rdSize + 20) * sizeof(char));
+            sprintf(res, "OK: %s\n", buffer);
             enviarRespuesta(self, cumpa, res);
             free(res);
         }
         else
             enviarRespuesta(self, cumpa, "Error de lectura\n");
-        free(buffer);
     }
     else
     {
-        char* respuestas[N_WORKERS - 1];
-        char* buffer = malloc((rqst.cuanto_leer + 1) * sizeof(char));
+        Leido respuestas[N_WORKERS - 1];
+        char buffer[BUFF_SIZE + 5] = "OK: ";
         int rdSize;
         Msg helpMsg = msgCreate(self, T_AYUDA, &rqst, sizeof(rqst));
         msgBroadcastPiola(workers, helpMsg, sizeof(rqst), respuestas, sizeof(char*));
-        int resultado = handleREABroadcast(respuestas, buffer);
-        switch(resltado)
+        int resultado = handleREABroadcast(respuestas, buffer + 4, &rdSize);
+        switch(resultado)
         {
             case HELP_REA_OK:
-                buffer[rdSize] = '\0';
-                char res = malloc((strlen(buffer) + 20) * sizeof(char));
-                sprintf(res, "OK FD %s\n", buffer);
-                enviarRespuesta(self, cumpa, res);
-                free(res);
+                buffer[rdSize + 4] = '\0';
+                enviarRespuesta(self, cumpa, buffer);
                 break;
             case HELP_REA_ERROR:
                 enviarRespuesta(self, cumpa, "Error de lectura\n");
                 printf("Flashiamos en REA\n");
                 break;
         }
-        free(buffer);
     }
-    */
 }
 
 /*
