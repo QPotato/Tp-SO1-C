@@ -387,11 +387,13 @@ void handleWRT(ParametrosWorker params, WorkerData *data, Msg *msg)
     // Me fijo si el archivo es local
     if(esLocalFD(data, rqst.FD))
     {
+        printf("quiero escribir el buffer -%s-\n", rqst.buffer);
         if(write(rqst.FD, rqst.buffer, rqst.cuanto_escribir))
             enviarRespuesta(self, cumpa, "OK\n");
         else
             enviarRespuesta(self, cumpa, "Error de escritura\n");
     }
+    // No es local
     else
     {
         int respuestas[N_WORKERS - 1];
@@ -450,11 +452,13 @@ void handleREA(ParametrosWorker params, WorkerData *data, Msg *msg)
     if(esLocalFD(data, rqst.FD))
     {
         char buffer[BUFF_SIZE];
-        int rdSize;
-        if((rdSize = read(rqst.FD, buffer, rqst.cuanto_leer)) >= 0)
+        size_t rdSize;
+        if((rdSize = read(rqst.FD, (void*)buffer, rqst.cuanto_leer)) >= 0)
         {
+            buffer[rdSize] = '\0';
             char* res = malloc((rdSize + 20) * sizeof(char));
             sprintf(res, "OK: %s\n", buffer);
+
             enviarRespuesta(self, cumpa, res);
             free(res);
         }
@@ -464,16 +468,18 @@ void handleREA(ParametrosWorker params, WorkerData *data, Msg *msg)
     else
     {
         Leido respuestas[N_WORKERS - 1];
-        char buffer[BUFF_SIZE + 5] = "OK: ";
+        char buffer[BUFF_SIZE];
         int rdSize;
         Msg helpMsg = msgCreate(self, T_AYUDA, &rqst, sizeof(rqst));
-        msgBroadcastPiola(workers, helpMsg, sizeof(rqst), respuestas, sizeof(char*));
-        int resultado = handleREABroadcast(respuestas, buffer + 4, &rdSize);
+        msgBroadcastPiola(workers, helpMsg, sizeof(rqst), respuestas, sizeof(Leido));
+        int resultado = handleREABroadcast(respuestas, buffer, &rdSize);
         switch(resultado)
         {
             case HELP_REA_OK:
-                buffer[rdSize + 4] = '\0';
-                enviarRespuesta(self, cumpa, buffer);
+                buffer[rdSize] = '\0';
+                char res[BUFF_SIZE + 5];
+                sprintf(res, "OK: %s\n", buffer);
+                enviarRespuesta(self, cumpa, res);
                 break;
             case HELP_REA_ERROR:
                 enviarRespuesta(self, cumpa, "Error de lectura\n");

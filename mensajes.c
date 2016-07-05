@@ -45,7 +45,7 @@ int msgBroadcast(mqd_t remitente, mqd_t *receptores, Request* helpRequest)
     return 0;
 }
 
-int msgBroadcastPiola(mqd_t *receptores, Msg mensaje, size_t dataSize, void* arregloRespuestas, size_t size)
+void msgBroadcastPiola(mqd_t *receptores, Msg mensaje, size_t dataSize, void* arregloRespuestas, size_t size)
 {
     mqd_t remitente = mensaje.remitente;
     for(int i = 0; i < N_WORKERS; i++)
@@ -119,8 +119,15 @@ mqd_t createCasilla()
     char nombre[20];
     sprintf(nombre, "/q%u", _queue_id);
     _queue_id++;
-    if((cas = mq_open(nombre, O_RDWR | O_CREAT, 0666, NULL)) < 0)
+
+    struct mq_attr newAttr;
+    newAttr.mq_maxmsg = 5;
+    newAttr.mq_msgsize = 2048;
+    newAttr.mq_flags = 0;
+    newAttr.mq_curmsgs = 0;
+    if((cas = mq_open(nombre, O_RDWR | O_CREAT, 0666, &newAttr)) < 0)
         fprintf(stderr, "flashié mq_open en createCasilla con retorno %d\n", errno);
+
     mq_unlink(nombre);
     return cas;
 }

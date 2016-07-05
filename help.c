@@ -169,6 +169,7 @@ void helpWRT(ParametrosWorker params, WorkerData *data, Msg *msg)
     // Reviso si es local
     if(esLocalFD(data, rqst.FD))
     {
+        printf("quiero escribir el buffer -%s-\n", rqst.buffer);
         if(write(rqst.FD, rqst.buffer, rqst.cuanto_escribir))
             res = HELP_WRT_OK;
         else

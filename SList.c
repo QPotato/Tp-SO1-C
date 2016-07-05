@@ -150,10 +150,11 @@ void* slist_nth(SList* lista, int n)
     {
         if(lista->next == NULL)
         {
-            printf("Acceso a SList fuera de rango");
+            printf("Acceso a SList fuera de rango\n");
             return NULL;
         }
         lista = lista->next;
+        n--;
     }
     return lista->data;
 }

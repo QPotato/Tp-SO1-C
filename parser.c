@@ -184,7 +184,7 @@ Request parse(char *cadena) {
         }
         rq.FD = atoi(args[1]);
         rq.cuanto_escribir = atoi(args[3]);
-        strcpy(rq.nombre_archivo, args[0]);
+        strcpy(rq.buffer, args[4]);
         break;
         
         case REA:

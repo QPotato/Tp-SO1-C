@@ -179,7 +179,9 @@ int handleREABroadcast(Leido *respuestas, char* buffer, int* rdSize)
         {
             // Este tenia el archivo y pudo leer! Nos copiamos el resultado.
             memcpy(buffer, respuestas[i].buffer, respuestas[i].size);
-            *rdSize = respuestas[i].size;
+            buffer[respuestas[i].size] = '\0';
+
+            *rdSize = respuestas[i].size + 1;
             return HELP_REA_OK;
         }
     }
