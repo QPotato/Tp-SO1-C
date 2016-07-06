@@ -37,7 +37,7 @@ void* proc_socket(void *parametros_v)
         mensaje_crudo[res]='\0';
 		Request rqst = parse(mensaje_crudo, strlen(mensaje_crudo));
 
-        if(rqst.con != -1)
+        if(rqst.con != ERR)
         {
 			//mandarle el request al worker
             aWorker.remitente = self;
@@ -46,6 +46,13 @@ void* proc_socket(void *parametros_v)
             *(Request*)aWorker.datos = rqst;
             msgSend(elegido, aWorker);
 			
+            //si es un BYE quiteo
+            if(rqst.con == BYE)
+            {
+                close(connection_socket);
+                break;
+            }
+
             //recibo la respuesta del worker
             int msgSize;
             if((msgSize = msgReceive(self, &deWorker)) <= 0)

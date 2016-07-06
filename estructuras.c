@@ -1,4 +1,7 @@
 #include "headers/estructuras.h"
+#include "headers/auxiliares.h"
+#include <unistd.h>
+#include "headers/SList.h"
 
 // Crea un abierto nuevo con los parametros dados.
 Abierto createAbierto(int fd, const char* nombre, mqd_t host)
@@ -75,7 +78,10 @@ void cerrarEnData(WorkerData* data, int FD)
 {
     Abierto* abiertos = data->abiertos;
     int nAbiertos = data->nAbiertos;
-    
+    if(close(FD) != 0)
+    {
+        printf("Flashiamos en cerrarEnData (con FD = %d)\n", FD);
+    }
     for(int i = 0; i < nAbiertos; i++)
         if(abiertos[i].fd == FD)
         {
@@ -85,3 +91,10 @@ void cerrarEnData(WorkerData* data, int FD)
         }
     data->nAbiertos--;
 }
+
+void cerrarSesion(WorkerData* data, int id)
+{
+    SList *sesiones = data->sesiones;
+    slist_remove(sesiones, slist_nth(sesiones, id), sesion_comp);
+}
+

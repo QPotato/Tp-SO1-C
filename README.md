@@ -31,3 +31,10 @@ TODO:
 - buffers tamaño fijo 4k para no compartir memoria
 - Agregarle al parser el chequeo de que el SIZE no sea mayor a 1024
 - De alguna manera dejar de usar BUFF_SIZE para el tamaño del buffer de lectura/escritura y para el tamaño maximo de mensaje que se puede recibir.
+
+5 de julio 2016 (o por ahí):
+
+    ANDA TODO LOCO.
+
+Todavía hay que arreglar que comparte memoria en algún que otro lado.
+Hay que testear un toque, pero parece que todo bien.

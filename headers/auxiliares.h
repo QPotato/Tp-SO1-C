@@ -1,5 +1,10 @@
+#include "procesos.h"
+
 // Funcion de comparacion. Devuelve 0 si y solo si la sesion a tiene como casilla b.
 int mqd_t_comp(void* a, void* b);
+
+// Funcion de comparacion de sesiones.
+int sesion_comp(void* a, void* b);
 
 //devuelve en char *nombres un string con los archivos locales separados por ' '
 void getLocalFiles(int id, mqd_t *workers, char *nombres);
@@ -33,3 +38,7 @@ int handleWRTBroadcast(int* respuestas);
 
 //Labura con las respuestas del broadcast que manda REA
 int handleREABroadcast(Leido *respuestas, char* buffer, int* rdSize);
+
+//cierra las sesiones
+void cerrarSesion(WorkerData* data, int id);
+

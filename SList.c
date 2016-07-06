@@ -89,20 +89,24 @@ SList*  slist_insert(SList* lista,unsigned int pos, void* n){
     l->next=nodo;
     return lista;
 }
-SList*  slist_remove(SList* lista, void* n, CompFunc comp){
-    SList* l=lista,*p;
-    while(l!=NULL){
-        if(comp(l->data,n)==0){
-            free(l->data);
-            l->data=l->next->data;
-            p=l->next;
-            l->next=l->next->next;
-            free(p);
-        }else
-            l=l->next;
+
+SList* slist_remove(SList* lista, void* dato, CompFunc comp)
+{
+    SList *l = lista;
+    if(comp(l->data, dato) == 0)
+    {
+        l = l->next;
+        return lista;
     }
-    return lista;
+    else
+    {
+        while(l->next != NULL && comp(l->next->data, dato) != 0)
+            l = l->next;
+        l->next = l->next->next;
+        return lista;
+    }
 }
+
 int     slist_contains(SList* lista, void* n, CompFunc comp){
     SList* l;
     for(l=lista;l!=NULL;l=l->next)

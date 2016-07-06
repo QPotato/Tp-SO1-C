@@ -65,9 +65,12 @@ void msgBroadcastPiola(mqd_t *receptores, Msg mensaje, size_t dataSize, void* ar
             fprintf(stderr, "flashié worker receive\n");
         if(helpReceive.tipo == T_DEVUELVO_AYUDA)
         {
-            memcpy(arregloRespuestas, helpReceive.datos, size);
-            arregloRespuestas += size;
-            msgDestroy(&helpReceive);
+            if(arregloRespuestas != NULL)
+            {
+                memcpy(arregloRespuestas, helpReceive.datos, size);
+                arregloRespuestas += size;
+                msgDestroy(&helpReceive);
+            }
         }
         else
         {

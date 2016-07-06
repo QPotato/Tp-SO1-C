@@ -13,6 +13,13 @@ int mqd_t_comp(void* a, void* b)
     return y - x;
 }
 
+int sesion_comp(void* a, void* b)
+{
+    Sesion *x = (Sesion *)a;
+    Sesion *y = (Sesion *)b;
+    return y - x;
+}
+
 //devuelve en char *nombres un string con los archivos locales separados por ' '
 void getLocalFiles(int id, char *nombres)
 {

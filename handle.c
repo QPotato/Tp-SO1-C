@@ -503,16 +503,43 @@ void handleBYE(ParametrosWorker params, WorkerData *data, Msg *msg)
     //data necesaria del worker
     //int id = params.id;
     mqd_t self = params.casilla;
-    //mqd_t *workers;
-    //workers = params.casillasWorkers;
+    mqd_t *workers;
+    workers = params.casillasWorkers;
     
     SList* sesiones = data->sesiones;
     int maxIDlocal = data->maxIDlocal;
 
     //handle...
-    printf("No implementado\n");
-    enviarRespuesta(self, cumpa, "Error: no implementado.\n");
+    // Reviso que este conectado y de paso averiguo su ID.
+    int sesionID;
+    if((sesionID = buscarSesion(cumpa, sesiones)) < 0)
+    {
+        enviarRespuesta(self, cumpa, "Error: no conectado.\n");
+        return;
+    }
+    Sesion *ses = (Sesion *)slist_nth(sesiones, sesionID);
+
+    //cierro todos los archivos
+    for(int i = 0; i < ses->nAbiertos; i++)
+    {
+        if(!esLocalFD(data, ses->fd[i]))
+        {
+            Request rqstClo;
+            rqstClo.con = CLO;
+            rqstClo.FD = ses->fd[i];
         
+            Msg msgClo = msgCreate(self, T_AYUDA, &rqstClo, sizeof(rqstClo));
+            msgBroadcastPiola(workers, msgClo, sizeof(rqstClo), NULL, 0);
+        }
+        else
+        {
+            cerrarEnData(data, ses->fd[i]);
+        }
+    }
+    
+    //archivos cerrados. Cerramos la sesion
+    cerrarSesion(data, sesionID);
+    
     //epilogo
     data->sesiones = sesiones;
     data->maxIDlocal = maxIDlocal;

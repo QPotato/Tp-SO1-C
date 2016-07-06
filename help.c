@@ -117,12 +117,13 @@ void helpOPN(ParametrosWorker params, WorkerData *data, Msg *msg)
             Abierto new = createAbierto(FD, rqst.nombre_archivo, self);
             
             //lo agrego a mi lista
-        agregarAbiertoEnData(data, new);
+            agregarAbiertoEnData(data, new);
         }
     }
     else
     {
-        FD = HELP_OPN_NOTFOUND; //no lo tengo
+        //no lo tengo
+        FD = HELP_OPN_NOTFOUND;
     }
     
     Msg respuesta = msgCreate(self, T_DEVUELVO_AYUDA, &FD, sizeof(int));
