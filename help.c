@@ -32,7 +32,7 @@ void helpLSD(ParametrosWorker params, WorkerData *data, Msg *msg)
         }
     }
     
-    Msg respuesta = msgCreate(self, T_DEVUELVO_AYUDA, (void*)nombres, strlen(nombres) + 1);
+    Msg respuesta = msgCreate(self, T_DEVUELVO_AYUDA, (void*)nombres, MAX_NOMBRE * MAX_ARCHIVOS);
     if(msgSend(cumpa, respuesta) < 0)
         fprintf(stderr, "flashié send ayuda LSD\n");
            
