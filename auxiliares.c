@@ -49,24 +49,12 @@ void getFiles(int id, mqd_t *workers, char *nombres)
     //creo el request
     Request helpRequest;
     helpRequest.con = LSD;
-    msgBroadcast(self, workers, &helpRequest);
+    Msg msg = msgCreate(self, T_AYUDA, &helpRequest, sizeof(Request));
+    char respuestas[N_WORKERS][MAX_NOMBRE * MAX_ABIERTOS];
+    msgBroadcastPiola(workers, msg, sizeof(Request), respuestas, MAX_NOMBRE * MAX_ABIERTOS);
     
     for(int i = 0; i < N_WORKERS - 1; i++)
-    {
-        Msg helpReceive;
-        if(msgReceive(self, &helpReceive) <= 0)
-            fprintf(stderr, "flashié worker receive\n");
-        if(helpReceive.tipo == T_DEVUELVO_AYUDA)
-        {
-            strcat(nombres, (char*)(helpReceive.datos));
-            msgDestroy(&helpReceive);
-        }
-        else
-        {
-            if(msgSend(self, helpReceive) < 0)
-                fprintf(stderr, "flashié devolviendome un mensaje (en LSD)\n");
-        }
-    }
+        strcat(nombres, respuestas[i]);
     return;
 }
 
