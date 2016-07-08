@@ -103,6 +103,7 @@ int main(int argc, char *argv[])
     if(argc == 2)
         dispatcher(atoi(argv[1]));
     else
-        printf("Bardeaste con la cantidad de argumentos!\nVa así:\n./tp [puerto]\n\n");
+        printf("./tp [puerto] para elegir puerto, corriendo por defecto en 8000\n");
+        dispatcher(8000);
     return 0;
 }

@@ -58,11 +58,17 @@ void msgBroadcastPiola(mqd_t *receptores, Msg mensaje, size_t dataSize, void* ar
     }
     msgDestroy(&mensaje);
 
+    Msg buf[MAX_MSGBUF];
+    int guardados = 0;
+
+    //recibo toda la pavada.
     for(int i = 0; i < N_WORKERS - 1; i++)
     {
         Msg helpReceive;
         if(msgReceive(remitente, &helpReceive) <= 0)
             fprintf(stderr, "flashié worker receive\n");
+
+        //mensajes que nos importan, los laburamos.
         if(helpReceive.tipo == T_DEVUELVO_AYUDA)
         {
             if(arregloRespuestas != NULL)
@@ -72,12 +78,19 @@ void msgBroadcastPiola(mqd_t *receptores, Msg mensaje, size_t dataSize, void* ar
                 msgDestroy(&helpReceive);
             }
         }
+        //mensajes que NO nos importan, los guardamos.
         else
         {
-            //TODO: guardar en un buffer y reenviar todos juntos
-            if(msgSend(remitente, helpReceive) < 0)
-                fprintf(stderr, "flashié devolviendome un mensaje (en LSD)\n");
+            buf[guardados++] = helpReceive;
+            i--;
         }
+    }
+
+    //mando todos los mensajes que guarde.
+    for(int i = 0; i < guardados; i++)
+    {
+        if(msgSend(remitente, buf[i]) < 0)
+            fprintf(stderr, "flashié devolviendo los mensajes guardados en LSD\n");
     }
     return;
 }

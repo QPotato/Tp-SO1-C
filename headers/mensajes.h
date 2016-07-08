@@ -16,6 +16,8 @@
 #define T_DEVUELVO_AYUDA 3
 #define T_REQUEST 0
 
+#define MAX_MSGBUF 16
+
 /*
  Convencion de uso:
     1)el que envia, hace malloc para datos.
